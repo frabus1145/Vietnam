@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Vietnam 2026/27</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,sans-serif;background:#f6f4ef;color:#1d2a26}
+#days{display:flex;gap:8px;overflow-x:auto;padding:calc(10px + env(safe-area-inset-top,0px)) 12px 10px;background:#fff;border-bottom:1px solid #e3dfd5;position:sticky;top:0;z-index:1000}
+#days button{flex:none;border:1px solid #d6d1c4;background:#fff;border-radius:12px;padding:8px 12px;font-size:14px;color:#1d2a26}
+#days button.on{background:#1f7a5c;border-color:#1f7a5c;color:#fff}
+#map{height:40vh;width:100%}
+#info{padding:12px 14px 4px}
+#info h2{margin:0;font-size:18px}
+#list{padding:0 12px 24px}
+.it{display:flex;gap:10px;align-items:center;background:#fff;border:1px solid #e3dfd5;border-radius:12px;padding:12px;margin-top:8px}
+.it b{flex:1}.it small{color:#6b7770}
+#sheet{position:fixed;left:0;right:0;bottom:0;background:#fff;border-radius:18px 18px 0 0;box-shadow:0 -4px 20px #0003;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));transform:translateY(110%);transition:transform .25s;z-index:2000}
+#sheet.open{transform:none}
+#sheet a{display:inline-block;margin:8px 8px 0 0;background:#1f7a5c;color:#fff;padding:9px 13px;border-radius:10px;text-decoration:none;font-size:14px}
+#sheet .x{float:right;border:0;background:none;font-size:20px}
+.pin{background:#1f7a5c;color:#fff;border-radius:50%;width:26px;height:26px;line-height:26px;text-align:center;font-weight:600;border:2px solid #fff}
+</style>
+</head>
+<body>
+<div id="days"></div>
+<div id="map"></div>
+<div id="info"></div>
+<div id="list"></div>
+<div id="sheet"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+// Coordinate approssimative: per la posizione esatta usa il pulsante "Apri su Google Maps".
+const H={
+g8:{n:"g8 center hotel saigon",a:"157 Pasteur, Xuan Hoa, Ho Chi Minh City, Vietnam",c:[10.7845,106.6905],b:"https://www.booking.com/hotel/vn/amm-saigon.it.html"},
+hoian:{n:"TNT Villa",a:"100 Tran Hung Dao, Cam Pho, Hoi An, Vietnam",c:[15.874,108.335],b:"https://www.booking.com/hotel/vn/hoi-an-t-amp-t-villa.it.html"},
+nb:{n:"Charm Trang An Retreat",a:"Khê Hạ, Hoa Lư, Ninh Bình, 430000 Ninh Binh, Vietnam",c:[20.25,105.9],b:"https://www.booking.com/hotel/vn/charm-trang-an-retreat-ninh-binh.it.html"},
+hn:{n:"Tranquility Boutique Homestay",a:"86 Phố Hàng Buồm, Hoan Kiem, Hanoi, Vietnam",c:[21.0348,105.8525],b:"https://www.booking.com/hotel/vn/tranquility-stay.it.html"}
+};
+// h = hotel della notte; he = l'hotel è la fine della giornata
+const D=[
+{d:"2026-12-29",t:"Partenza dall'Italia",s:[{n:"Aeroporto di Malpensa",c:[45.63,8.723],x:"Volo con scalo a Hong Kong"},{n:"Aeroporto di Hong Kong",c:[22.308,113.918],x:"Scalo di circa 2 ore"}]},
+{d:"2026-12-30",t:"Arrivo a Ho Chi Minh",h:"g8",he:1,s:[{n:"Aeroporto Tan Son Nhat",c:[10.8188,106.652],t:"10:35",x:"Arrivo dopo lo scalo a Hong Kong"}]},
+{d:"2026-12-31",t:"Cu Chi e Delta del Mekong",h:"g8",s:[{n:"Tunnel di Cu Chi",c:[11.1428,106.4627],x:"Ritiro dall'hotel verso le 7:30"},{n:"Delta del Mekong",c:[10.36,106.36],x:"Escursione di 11 ore in tutto, spostamenti inclusi"}]},
+{d:"2027-01-01",t:"Volo per Da Nang e Hoi An",h:"hoian",he:1,s:[{n:"Aeroporto Tan Son Nhat",c:[10.8188,106.652],t:"14:25",x:"Volo Vietnam Airlines"},{n:"Aeroporto di Da Nang",c:[16.0439,108.1994],t:"15:55",x:"Poi trasferimento in hotel a Hoi An"}]},
+{d:"2027-01-02",t:"Hoi An",h:"hoian",s:[]},
+{d:"2027-01-03",t:"Hoi An e treno notturno",h:"hoian",s:[{n:"Stazione di Da Nang",c:[16.0713,108.2093],t:"18:05",x:"Treno Laman Express, arrivo a Ninh Binh alle 9:15 del 4 gennaio"}]},
+{d:"2027-01-04",t:"Arrivo a Ninh Binh",h:"nb",he:1,s:[{n:"Stazione di Ninh Binh",c:[20.2476,105.9757],t:"9:15",x:"Arrivo del treno notturno"}]},
+{d:"2027-01-05",t:"Ninh Binh",h:"nb",s:[]},
+{d:"2027-01-06",t:"Crociera Ha Long e Lan Ha",h:"nb",s:[{n:"Tuan Chau Marina",c:[20.9507,106.9923],x:"Ritiro a Ninh Binh alle 7:00, passaggio a Hanoi verso le 8:00. Crociera di 2 giorni"},{n:"Baia di Ha Long",c:[20.91,107.18]},{n:"Baia di Lan Ha",c:[20.77,107.03],x:"Notte a bordo"}]},
+{d:"2027-01-07",t:"Rientro a Hanoi",h:"hn",he:1,s:[{n:"Tuan Chau Marina",c:[20.9507,106.9923],x:"Sbarco, poi arrivo a Hanoi Old Quarter verso le 15:00"}]},
+{d:"2027-01-08",t:"Hanoi",h:"hn",s:[]},
+{d:"2027-01-09",t:"Hanoi",h:"hn",s:[]},
+{d:"2027-01-10",t:"Volo di rientro",h:"hn",s:[{n:"Aeroporto di Noi Bai",c:[21.2212,105.8072],t:"19:30",x:"Volo con breve scalo a Hong Kong, arrivo a Malpensa alle 7:40 dell'11 gennaio"}]}
+];
+const $=i=>document.getElementById(i);
+const map=L.map('map').setView([16,106],5);
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
+const layer=L.layerGroup().addTo(map);
+const gm=q=>'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(q);
+const lab=d=>new Date(d+'T12:00').toLocaleDateString('it-IT',{day:'numeric',month:'short'});
+function items(day){
+  const a=day.s.map(x=>({...x,k:'📍',q:x.n}));
+  if(day.h){const h=H[day.h],it={n:h.n,c:h.c,x:h.a,k:'🏨',q:h.a,b:h.b};day.he?a.push(it):a.unshift(it)}
+  return a;
+}
+function show(i){
+  const day=D[i],a=items(day);
+  [...$('days').children].forEach((b,j)=>b.classList.toggle('on',j==i));
+  $('sheet').classList.remove('open');
+  layer.clearLayers();
+  a.forEach((it,j)=>L.marker(it.c,{icon:L.divIcon({className:'',html:'<div class="pin">'+(j+1)+'</div>',iconSize:[26,26]})}).on('click',()=>card(it)).addTo(layer));
+  if(a.length>1)L.polyline(a.map(x=>x.c),{color:'#1f7a5c',weight:3,dashArray:'6 6'}).addTo(layer);
+  if(a.length)map.fitBounds(a.map(x=>x.c),{padding:[40,40],maxZoom:13});
+  $('info').innerHTML='<h2>'+lab(day.d)+' · '+day.t+'</h2>';
+  $('list').innerHTML=a.length?'':'<p style="color:#6b7770">Nessuna attività ancora: aggiungila nel file.</p>';
+  a.forEach((it,j)=>{const e=document.createElement('div');e.className='it';
+    e.innerHTML='<span>'+it.k+'</span><b>'+it.n+'</b><small>'+(it.t||'')+'</small>';
+    e.onclick=()=>{card(it);map.setView(it.c,13)};$('list').appendChild(e)});
+}
+function card(it){
+  $('sheet').innerHTML='<button class="x" onclick="this.parentNode.classList.remove(\'open\')">✕</button><h3 style="margin:0">'+it.k+' '+it.n+'</h3>'+(it.t?'<p><b>Orario:</b> '+it.t+'</p>':'')+(it.x?'<p>'+it.x+'</p>':'')+'<a href="'+gm(it.q)+'" target="_blank" rel="noopener">Apri su Google Maps</a>'+(it.b?'<a href="'+it.b+'" target="_blank" rel="noopener">Apri su Booking</a>':'');
+  $('sheet').classList.add('open');
+}
+D.forEach((d,i)=>{const b=document.createElement('button');b.textContent=lab(d.d);b.onclick=()=>show(i);$('days').appendChild(b)});
+const t=new Date().toISOString().slice(0,10),s=D.findIndex(d=>d.d===t);
+show(s<0?0:s);
+setTimeout(()=>map.invalidateSize(),200);
+</script>
+</body>
+</html>
