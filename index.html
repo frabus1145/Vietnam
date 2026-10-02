@@ -29,6 +29,9 @@ body{margin:0;font-family:system-ui,-apple-system,sans-serif;background:#f6f4ef;
 #sheet a{display:inline-block;margin:8px 8px 0 0;background:#1f7a5c;color:#fff;padding:9px 13px;border-radius:10px;text-decoration:none;font-size:14px}
 #sheet .x{float:right;border:0;background:none;font-size:20px}
 .pin{background:#1f7a5c;color:#fff;border-radius:50%;width:26px;height:26px;line-height:26px;text-align:center;font-weight:600;border:2px solid #fff}
+.leg{margin:4px 0 0 18px;color:#6b7770;font-size:13px}
+details{margin-top:14px}summary{font-weight:600;padding:6px 2px}
+.it a{color:#1f7a5c;font-size:13px;text-decoration:none;border:1px solid #1f7a5c;border-radius:8px;padding:4px 8px}
 </style>
 </head>
 <body>
@@ -46,22 +49,90 @@ hoian:{n:"TNT Villa",a:"100 Tran Hung Dao, Cam Pho, Hoi An, Vietnam",c:[15.874,1
 nb:{n:"Charm Trang An Retreat",a:"Khê Hạ, Hoa Lư, Ninh Bình, 430000 Ninh Binh, Vietnam",c:[20.25,105.9],b:"https://www.booking.com/hotel/vn/charm-trang-an-retreat-ninh-binh.it.html"},
 hn:{n:"Tranquility Boutique Homestay",a:"86 Phố Hàng Buồm, Hoan Kiem, Hanoi, Vietnam",c:[21.0348,105.8525],b:"https://www.booking.com/hotel/vn/tranquility-stay.it.html"}
 };
-// h = hotel della notte; he = l'hotel è la fine della giornata
+const MXP={n:"Aeroporto di Malpensa",c:[45.63,8.723],q:"Milano Malpensa Airport"},
+HKG={n:"Aeroporto di Hong Kong",c:[22.308,113.918],q:"Hong Kong International Airport"},
+SGN={n:"Aeroporto Tan Son Nhat",c:[10.8188,106.652],q:"Tan Son Nhat International Airport"},
+DAD={n:"Aeroporto di Da Nang",c:[16.0439,108.1994],q:"Da Nang International Airport"},
+HAN={n:"Aeroporto di Noi Bai",c:[21.2212,105.8072],q:"Noi Bai International Airport"},
+MAR={n:"Tuan Chau Marina",c:[20.9507,106.9923],q:"Tuan Chau Marina, Ha Long"},
+NHW={n:"Nguyễn Huệ Walking Street",c:[10.7742,106.7036],q:"Nguyen Hue Walking Street, Ho Chi Minh"};
+// h = hotel; m = durata dello spostamento dalla tappa precedente (stima); cy = città per le ricerche su Google Maps; sg = suggerimenti
 const D=[
-{d:"2026-12-29",t:"Partenza dall'Italia",s:[{n:"Aeroporto di Malpensa",c:[45.63,8.723],x:"Volo con scalo a Hong Kong"},{n:"Aeroporto di Hong Kong",c:[22.308,113.918],x:"Scalo di circa 2 ore"}]},
-{d:"2026-12-30",t:"Arrivo a Ho Chi Minh",h:"g8",he:1,s:[{n:"Aeroporto Tan Son Nhat",c:[10.8188,106.652],t:"10:35",x:"Arrivo dopo lo scalo a Hong Kong"}]},
-{d:"2026-12-31",t:"Cu Chi e Delta del Mekong",h:"g8",s:[{n:"Tunnel di Cu Chi",c:[11.1428,106.4627],x:"Ritiro dall'hotel verso le 7:30"},{n:"Delta del Mekong",c:[10.36,106.36],x:"Escursione di 11 ore in tutto, spostamenti inclusi"}]},
-{d:"2027-01-01",t:"Volo per Da Nang e Hoi An",h:"hoian",he:1,s:[{n:"Aeroporto Tan Son Nhat",c:[10.8188,106.652],t:"14:25",x:"Volo Vietnam Airlines"},{n:"Aeroporto di Da Nang",c:[16.0439,108.1994],t:"15:55",x:"Poi trasferimento in hotel a Hoi An"}]},
-{d:"2027-01-02",t:"Hoi An",h:"hoian",s:[]},
-{d:"2027-01-03",t:"Hoi An e treno notturno",h:"hoian",s:[{n:"Stazione di Da Nang",c:[16.0713,108.2093],t:"18:05",x:"Treno Laman Express, arrivo a Ninh Binh alle 9:15 del 4 gennaio"}]},
-{d:"2027-01-04",t:"Arrivo a Ninh Binh",h:"nb",he:1,s:[{n:"Stazione di Ninh Binh",c:[20.2476,105.9757],t:"9:15",x:"Arrivo del treno notturno"}]},
-{d:"2027-01-05",t:"Ninh Binh",h:"nb",s:[]},
-{d:"2027-01-06",t:"Crociera Ha Long e Lan Ha",h:"nb",s:[{n:"Tuan Chau Marina",c:[20.9507,106.9923],x:"Ritiro a Ninh Binh alle 7:00, passaggio a Hanoi verso le 8:00. Crociera di 2 giorni"},{n:"Baia di Ha Long",c:[20.91,107.18]},{n:"Baia di Lan Ha",c:[20.77,107.03],x:"Notte a bordo"}]},
-{d:"2027-01-07",t:"Rientro a Hanoi",h:"hn",he:1,s:[{n:"Tuan Chau Marina",c:[20.9507,106.9923],x:"Sbarco, poi arrivo a Hanoi Old Quarter verso le 15:00"}]},
-{d:"2027-01-08",t:"Hanoi",h:"hn",s:[]},
-{d:"2027-01-09",t:"Hanoi",h:"hn",s:[]},
-{d:"2027-01-10",t:"Volo di rientro",h:"hn",s:[{n:"Aeroporto di Noi Bai",c:[21.2212,105.8072],t:"19:30",x:"Volo con breve scalo a Hong Kong, arrivo a Malpensa alle 7:40 dell'11 gennaio"}]}
+{d:"2026-12-29",t:"Partenza e arrivo a Ho Chi Minh",cy:"",s:[
+{...MXP,x:"Partenza dall'Italia"},
+{...HKG,m:"Volo di circa 12 ore",x:"Scalo di quasi 2 ore"},
+{...SGN,t:"10:35 del 30 dic",m:"Volo di circa 3 ore",x:"Arrivo a Ho Chi Minh: la giornata continua il 30"}]},
+{d:"2026-12-30",t:"Arrivo e prima giornata a Ho Chi Minh",cy:"Ho Chi Minh",sg:"hcm",s:[
+{...SGN,t:"10:35",x:"Arrivo dal volo con scalo a Hong Kong"},
+{h:"g8",m:"Circa 30–40 min in taxi/Grab"},
+{n:"Basilica di Notre-Dame",c:[10.7798,106.699],m:"Circa 10 min in taxi/Grab",x:"Chiesa in mattoni rossi arrivati da Marsiglia"},
+{n:"Ufficio Postale Centrale",c:[10.78,106.6999],m:"1 min a piedi",x:"Progettato da Gustave Eiffel: soffitto a volta, vecchie cabine telefoniche e grandi mappe storiche"},
+{n:"Mercato di Ben Thanh",c:[10.7725,106.698],m:"Circa 15 min a piedi",x:"Souvenir, artigianato e street food. Da provare il banh mi (circa 1 €), oppure da Banh Mi Me In per mangiarlo seduti"},
+{...NHW,m:"Circa 15 min a piedi",x:"Via pedonale dal Municipio al fiume Saigon. Pausa da The Café Apartments per l'egg coffee"},
+{n:"Vinhomes Central Park",c:[10.795,106.7218],m:"Circa 15–20 min in taxi/Grab",x:"Parco sul fiume con vista sui grattacieli"},
+{n:"Saigon Japan Town",c:[10.7826,106.7045],m:"Circa 15–20 min in taxi/Grab",x:"Un piccolo angolo di Giappone, per finire la giornata"}]},
+{d:"2026-12-31",t:"Cu Chi, Delta del Mekong e Capodanno",cy:"Ho Chi Minh",s:[
+{h:"g8",t:"Ritiro verso le 7:30"},
+{n:"Tunnel di Cu Chi",c:[11.1428,106.4627],m:"Circa 1h30–2h in bus",x:"Tunnel usati durante la guerra del Vietnam"},
+{n:"Delta del Mekong (My Tho)",c:[10.36,106.36],m:"Circa 2h–2h30 in bus",x:"Pranzo in ristorante locale e giro in sampan. Escursione di 11 ore in tutto"},
+{h:"g8",t:"Rientro verso le 18:30",m:"Circa 2h in bus"},
+{...NHW,t:"Fino a mezzanotte",m:"Circa 10 min in taxi/Grab",x:"Capodanno con palco e DJ, fuochi d'artificio sul fiume"}]},
+{d:"2027-01-01",t:"Volo per Da Nang e prima sera a Hoi An",cy:"Hoi An",s:[
+{h:"g8"},
+{...SGN,t:"14:25",m:"Circa 30–40 min in taxi/Grab",x:"Volo Vietnam Airlines"},
+{...DAD,t:"15:55",m:"Volo di circa 1h30",x:"Arrivo a Da Nang"},
+{h:"hoian",m:"Circa 45 min in taxi/Grab"},
+{n:"Ponte Coperto Giapponese (Chua Cau)",c:[15.8772,108.3263],m:"Circa 10 min in taxi/Grab",x:"Icona della città vecchia, patrimonio Unesco"},
+{n:"Sala Assemblee Phuoc Kien",c:[15.8774,108.3295],m:"5 min a piedi",x:"Sala dedicata alla dea del mare"},
+{n:"Fiume Thu Bon",c:[15.8764,108.3282],m:"5 min a piedi",x:"Dal tramonto si riempie di lanterne; giro in barca per liberare una lanterna di carta (circa 5–8 € a barca)"},
+{n:"Mercato notturno di An Hoi",c:[15.8755,108.327],m:"2 min a piedi",x:"Mercato notturno sull'isola di An Hoi. Cena da Hoi An Cuisine Restaurant 73"}]},
+{d:"2027-01-02",t:"Hoi An e dintorni",cy:"Hoi An",sg:"hoian",s:[
+{h:"hoian"},
+{n:"Foresta di cocco di Bay Mau (Cam Thanh)",c:[15.8667,108.375],m:"Circa 20 min in taxi/Grab",x:"Area protetta con canali di palme d'acqua: giro sulle barche a forma di noce di cocco"},
+{n:"Risaie di Cam Chau",c:[15.883,108.344],m:"Circa 15 min in taxi/Grab",x:"Raggiungibili in Grab, scooter o bici. Pranzo da Roving Chill House"},
+{n:"Città vecchia e fiume Thu Bon",c:[15.8772,108.3275],m:"Circa 10–15 min in taxi/Grab",x:"Nel pomeriggio, poi la sera per lo spettacolo delle lanterne. Cena da Home Taste"}]},
+{d:"2027-01-03",t:"Hoi An e treno notturno",cy:"Hoi An",sg:"hoian",s:[
+{h:"hoian"},
+{n:"Stazione di Da Nang",c:[16.0713,108.2093],t:"18:05",m:"Circa 45–55 min in taxi/Grab",x:"Treno notturno Laman Express, arrivo a Ninh Binh alle 9:15 del 4 gennaio"}]},
+{d:"2027-01-04",t:"Arrivo a Ninh Binh",cy:"Ninh Binh",sg:"nb",s:[
+{n:"Stazione di Ninh Binh",c:[20.2476,105.9757],t:"9:15",x:"Arrivo del treno notturno (circa 15 ore di viaggio)"},
+{h:"nb",m:"Circa 20 min in taxi/Grab"}]},
+{d:"2027-01-05",t:"Ninh Binh",cy:"Ninh Binh",sg:"nb",s:[
+{h:"nb"},
+{n:"Trang An",c:[20.253,105.906],m:"Circa 10 min in taxi/Grab",x:"Giro in barca sulle piccole barche dei locali (spesso remano con i piedi) tra grotte e templi; dura circa 2–3 ore"},
+{n:"Hang Mua (Mua Cave)",c:[20.2155,105.9382],m:"Circa 25 min in taxi/Grab",x:"Circa 500 gradini per la vista più famosa del Vietnam: il fiume Ngo Dong tra le montagne di Tam Coc. In cima la statua di un drago"},
+{n:"Pagoda di Bich Dong",c:[20.206,105.925],m:"Circa 10 min in taxi/Grab",x:"Tempio costruito nella roccia, si arriva da un ponte di pietra"}]},
+{d:"2027-01-06",t:"Crociera Ha Long e Lan Ha (giorno 1)",cy:"Ha Long",s:[
+{h:"nb",t:"Ritiro alle 7:00"},
+{...MAR,m:"Circa 3 ore in transfer (con passaggio a Hanoi verso le 8:00)",x:"Imbarco sulla crociera di 2 giorni. Pranzo a bordo; nel pomeriggio kayak o barca di bambù verso una grotta, oppure la spiaggia di Ba Trai Dao. Possibili lezione di cucina, cena e pesca a bordo"},
+{n:"Baia di Lan Ha",c:[20.77,107.03],m:"Navigazione di circa 1 ora",x:"Notte a bordo"}]},
+{d:"2027-01-07",t:"Crociera (giorno 2) e rientro a Hanoi",cy:"Ha Long",s:[
+{n:"Baia di Lan Ha",c:[20.77,107.03],x:"Tai Chi all'alba sul ponte e colazione; poi kayak nell'area di Ao Ech o visita dell'isola di Lan Ha. Check-out e brunch a bordo"},
+{...MAR,m:"Navigazione di circa 1 ora",x:"Sbarco al porto"},
+{h:"hn",t:"Arrivo verso le 15:00",m:"Circa 2h30–3h in transfer"}]},
+{d:"2027-01-08",t:"Hanoi",cy:"Hanoi",sg:"hn",s:[
+{h:"hn"},
+{n:"Pagoda Tran Quoc",c:[21.0486,105.8365],m:"Circa 15 min in taxi/Grab",x:"La più antica pagoda di Hanoi, sul Lago dell'Ovest"},
+{n:"Mausoleo di Ho Chi Minh",c:[21.0368,105.8346],m:"Circa 10 min in taxi/Grab"},
+{n:"Pagoda Chua Mot Cot",c:[21.0359,105.8334],m:"3 min a piedi",x:"La pagoda su una sola colonna"},
+{n:"Tempio della Letteratura",c:[21.0287,105.8355],m:"Circa 8 min in taxi/Grab",x:"Sede della prima università del paese, con bonsai di oltre 200 anni (ingresso circa 1,20 €)"},
+{n:"Southern Train Street",c:[21.0215,105.845],m:"Circa 10 min in taxi/Grab",x:"Meno affollata di quella centrale; secondo le ultime notizie è l'unica ancora aperta, meglio verificare"},
+{n:"Cattedrale di San Giuseppe",c:[21.0287,105.8489],m:"Circa 10–15 min in taxi/Grab"},
+{n:"Tempio Ngoc Son",c:[21.0307,105.8524],m:"Circa 15 min a piedi",x:"Sul lago Hoan Kiem, si arriva da un ponte rosso"},
+{n:"The Note Coffee",c:[21.0338,105.8534],m:"Circa 5 min a piedi",x:"Bar ricoperto di post-it lasciati dai clienti"},
+{n:"Teatro delle marionette sull'acqua Thang Long",c:[21.0322,105.853],m:"2 min a piedi",x:"Spettacolo serale; poi il ponte rosso illuminato"}]},
+{d:"2027-01-09",t:"Hanoi",cy:"Hanoi",sg:"hn",s:[{h:"hn"}]},
+{d:"2027-01-10",t:"Ultimo giorno e volo di rientro",cy:"Hanoi",sg:"hn",s:[
+{h:"hn"},
+{n:"Cafè Giang",c:[21.0335,105.8525],m:"Circa 5 min a piedi",x:"Pausa per l'autentico egg coffee"},
+{...HAN,t:"19:30",m:"Circa 45–60 min in taxi/Grab",x:"Volo per Hong Kong (circa 2h40), breve scalo e poi circa 12 ore fino a Malpensa, dove arrivi alle 7:40 dell'11 gennaio"}]}
 ];
+const S={
+hcm:{n:"Ho Chi Minh",l:[["Museo dei Residuati Bellici","Il museo più visitato della città, sulla guerra: duro ma importante"],["Palazzo dell'Indipendenza","Ex sede del governo del Sud, con bunker e sale originali"],["Pagoda dell'Imperatore di Giada","Tempio taoista pieno di incenso e statue"],["Cholon e Mercato Binh Tay","La Chinatown di Saigon, con mercato e templi cinesi"],["Bitexco Financial Tower","Terrazza panoramica sulla città, bella al tramonto"]]},
+hoian:{n:"Hoi An",l:[["Biglietto cumulativo della città vecchia","Ticket di 3 giorni (circa 3 €) per templi e case storiche"],["Spiaggia di An Bang","A circa 5 km dal centro, relax e locali sul mare"],["Villaggio di Tra Que","Giro in bici tra gli orti e lezione di cucina"],["Santuario di My Son","Rovine Unesco del regno Champa, a circa 40 km (mezza giornata)"],["White Rose e Cao Lau","Piatti tipici di Hoi An: ravioli di riso ai gamberi e noodles"]]},
+nb:{n:"Ninh Binh",l:[["Hoa Lu, antica capitale","Templi dei re Dinh e Le, vicino alla zona dell'hotel"],["Pagoda di Bai Dinh","Il complesso buddista più grande del Vietnam"],["Giro in barca a Tam Coc","Alternativa a Trang An, tra risaie e grotte"],["Riserva di Van Long","Zona umida da esplorare in barca, con possibili avvistamenti di langur"],["Parco nazionale di Cuc Phuong","Foresta pluviale, escursione di una giornata"]]},
+hn:{n:"Hanoi",l:[["Prigione di Hoa Lo","Museo nell'ex prigione coloniale"],["Bun cha e pho nel Quartiere Vecchio","Street food tipico di Hanoi"],["Ponte Long Bien","Ponte in ferro di epoca francese, bello al tramonto"],["Mercato notturno del weekend","Venerdì, sabato e domenica sera nel Quartiere Vecchio (il 9 gennaio è sabato)"],["Museo di Etnologia","Le culture delle 54 etnie del Vietnam"]]}
+};
 const $=i=>document.getElementById(i);
 const map=L.map('map').setView([16,106],5);
 const MAPTILER_KEY=""; // incolla qui la chiave MapTiler, tra le virgolette
@@ -70,27 +141,37 @@ L.tileLayer(tiles,{maxZoom:19,crossOrigin:true,attribution:MAPTILER_KEY?'© MapT
 const layer=L.layerGroup().addTo(map);
 const gm=q=>'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(q);
 const lab=d=>new Date(d+'T12:00').toLocaleDateString('it-IT',{day:'numeric',month:'short'});
+const dir=(a,b,m)=>'https://www.google.com/maps/dir/?api=1&origin='+encodeURIComponent(a)+'&destination='+encodeURIComponent(b)+'&travelmode='+(/piedi/.test(m)?'walking':'driving');
+const photo=q=>'https://www.google.com/search?tbm=isch&q='+encodeURIComponent(q);
 function items(day){
-  const a=day.s.map(x=>({...x,k:'📍',q:x.n}));
-  if(day.h){const h=H[day.h],it={n:h.n,c:h.c,x:h.a,k:'🏨',q:h.a,b:h.b};day.he?a.push(it):a.unshift(it)}
-  return a;
+  return day.s.map(x=>{
+    if(x.h){const k=H[x.h];return {n:k.n,c:k.c,x:k.a,k:'🏨',q:k.a,b:k.b,m:x.m,t:x.t}}
+    return {...x,k:'📍',q:x.q||x.n+(day.cy?', '+day.cy:'')};
+  });
 }
 function show(i){
   const day=D[i],a=items(day);
   [...$('days').children].forEach((b,j)=>b.classList.toggle('on',j==i));
   $('sheet').classList.remove('open');
   layer.clearLayers();
-  a.forEach((it,j)=>L.marker(it.c,{icon:L.divIcon({className:'',html:'<div class="pin">'+(j+1)+'</div>',iconSize:[26,26]})}).on('click',()=>card(it)).addTo(layer));
+  a.forEach((it,j)=>{it.p=a[j-1];L.marker(it.c,{icon:L.divIcon({className:'',html:'<div class="pin">'+(j+1)+'</div>',iconSize:[26,26]})}).on('click',()=>card(it)).addTo(layer)});
   if(a.length>1)L.polyline(a.map(x=>x.c),{color:'#1f7a5c',weight:3,dashArray:'6 6'}).addTo(layer);
-  if(a.length)map.fitBounds(a.map(x=>x.c),{padding:[40,40],maxZoom:13});
-  $('info').innerHTML='<h2>'+lab(day.d)+' · '+day.t+'</h2>';
-  $('list').innerHTML=a.length?'':'<p style="color:#6b7770">Nessuna attività ancora: aggiungila nel file.</p>';
-  a.forEach((it,j)=>{const e=document.createElement('div');e.className='it';
+  map.fitBounds(a.map(x=>x.c),{padding:[40,40],maxZoom:13});
+  $('info').innerHTML='<h2>'+lab(day.d)+' · '+day.t+'</h2><small style="color:#6b7770">Durate indicative: tocca una tappa → Indicazioni per il tempo aggiornato su Google Maps.</small>';
+  const ls=$('list');ls.innerHTML='';
+  a.forEach(it=>{
+    if(it.p&&it.m){const g=document.createElement('div');g.className='leg';g.textContent='↓ '+it.m;ls.appendChild(g)}
+    const e=document.createElement('div');e.className='it';
     e.innerHTML='<span>'+it.k+'</span><b>'+it.n+'</b><small>'+(it.t||'')+'</small>';
-    e.onclick=()=>{card(it);map.setView(it.c,13)};$('list').appendChild(e)});
+    e.onclick=()=>{card(it);map.setView(it.c,13)};ls.appendChild(e)});
+  const s=S[day.sg];
+  if(s){const d=document.createElement('details');d.open=a.filter(x=>x.k=='📍').length<2;
+    d.innerHTML='<summary>💡 Suggerimenti a '+s.n+'</summary>'+s.l.map(x=>'<div class="it"><div style="flex:1"><b>'+x[0]+'</b><br><small>'+x[1]+'</small></div><a href="'+photo(x[0]+' '+s.n)+'" target="_blank" rel="noopener">Foto</a><a href="'+gm(x[0]+', '+s.n)+'" target="_blank" rel="noopener">Mappa</a></div>').join('');
+    ls.appendChild(d)}
 }
 function card(it){
-  $('sheet').innerHTML='<button class="x" onclick="this.parentNode.classList.remove(\'open\')">✕</button><h3 style="margin:0">'+it.k+' '+it.n+'</h3>'+(it.t?'<p><b>Orario:</b> '+it.t+'</p>':'')+(it.x?'<p>'+it.x+'</p>':'')+'<a href="'+gm(it.q)+'" target="_blank" rel="noopener">Apri su Google Maps</a>'+(it.b?'<a href="'+it.b+'" target="_blank" rel="noopener">Apri su Booking</a>':'');
+  const lk=(u,t)=>'<a href="'+u+'" target="_blank" rel="noopener">'+t+'</a>';
+  $('sheet').innerHTML='<button class="x" onclick="this.parentNode.classList.remove(\'open\')">✕</button><h3 style="margin:0">'+it.k+' '+it.n+'</h3>'+(it.t?'<p><b>Orario:</b> '+it.t+'</p>':'')+(it.p&&it.m?'<p><b>Spostamento da '+it.p.n+':</b> '+it.m+'</p>':'')+(it.x?'<p>'+it.x+'</p>':'')+lk(gm(it.q),'Apri su Google Maps')+(it.p&&it.m&&!/volo|treno/i.test(it.m)?lk(dir(it.p.q,it.q,it.m),'Indicazioni'):'')+(it.b?lk(it.b,'Apri su Booking'):'');
   $('sheet').classList.add('open');
 }
 D.forEach((d,i)=>{const b=document.createElement('button');b.textContent=lab(d.d);b.onclick=()=>show(i);$('days').appendChild(b)});
