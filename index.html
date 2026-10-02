@@ -149,18 +149,46 @@ function items(day){
     return {...x,k:'📍',q:x.q||x.n+(day.cy?', '+day.cy:'')};
   });
 }
+let cur=-1;
+const CK='vn-legs-v1';let LC={};try{LC=JSON.parse(localStorage.getItem(CK)||'{}')}catch(e){}
+const key=(a,b)=>a.c.join(',')+'>'+b.c.join(',');
+const road=it=>it.p&&it.m&&!/volo|treno|navigazione/i.test(it.m);
+const fm=s=>s>=3600?Math.floor(s/3600)+'h'+String(Math.round(s%3600/60)).padStart(2,'0'):Math.round(s/60)+' min';
+function real(it,l){const w=/piedi/.test(it.m),m=w?l.d/1000/4.8*3600:l.s,hi=w?m:m*(l.d<25000?1.4:1.2);
+  return (w?'A piedi ':'')+'circa '+(hi>m*1.05?fm(m).replace(' min','')+'–'+fm(hi):fm(m))+' · '+(l.d/1000).toFixed(1).replace('.',',')+' km'}
+async function leg(a,b){
+  const k=key(a,b);if(LC[k])return LC[k];
+  await new Promise(r=>setTimeout(r,200));
+  const r=await fetch('https://router.project-osrm.org/route/v1/driving/'+a.c[1]+','+a.c[0]+';'+b.c[1]+','+b.c[0]+'?overview=full&geometries=geojson');
+  const j=await r.json();if(j.code!=='Ok')throw 0;
+  const o=j.routes[0],c=o.geometry.coordinates,st=Math.ceil(c.length/80);
+  LC[k]={s:Math.round(o.duration),d:Math.round(o.distance),g:c.filter((_,i)=>i%st==0||i==c.length-1).map(p=>[p[1],p[0]])};
+  try{localStorage.setItem(CK,JSON.stringify(LC))}catch(e){}
+  return LC[k];
+}
+async function enrich(a,i){
+  for(const it of a){
+    if(cur!==i)return;
+    if(!road(it))continue;
+    try{const l=await leg(it.p,it);if(cur!==i)return;
+      it.rm=real(it,l);if(it.g)it.g.textContent='↓ ✓ '+it.rm;
+      if(it.pl)layer.removeLayer(it.pl);
+      it.pl=L.polyline(l.g,{color:'#1f7a5c',weight:4}).addTo(layer)}catch(e){}
+  }
+}
+async function warm(){for(let i=0;i<D.length;i++){const a=items(D[i]);for(let j=1;j<a.length;j++){a[j].p=a[j-1];if(road(a[j]))try{await leg(a[j-1],a[j])}catch(e){}}}}
 function show(i){
   const day=D[i],a=items(day);
   [...$('days').children].forEach((b,j)=>b.classList.toggle('on',j==i));
   $('sheet').classList.remove('open');
   layer.clearLayers();
   a.forEach((it,j)=>{it.p=a[j-1];L.marker(it.c,{icon:L.divIcon({className:'',html:'<div class="pin">'+(j+1)+'</div>',iconSize:[26,26]})}).on('click',()=>card(it)).addTo(layer)});
-  if(a.length>1)L.polyline(a.map(x=>x.c),{color:'#1f7a5c',weight:3,dashArray:'6 6'}).addTo(layer);
+  cur=i;a.forEach((it,j)=>{if(j)it.pl=L.polyline([a[j-1].c,it.c],{color:'#1f7a5c',weight:3,dashArray:'6 6'}).addTo(layer)});
   map.fitBounds(a.map(x=>x.c),{padding:[40,40],maxZoom:13});
-  $('info').innerHTML='<h2>'+lab(day.d)+' · '+day.t+'</h2><small style="color:#6b7770">Durate indicative: tocca una tappa → Indicazioni per il tempo aggiornato su Google Maps.</small>';
+  $('info').innerHTML='<h2>'+lab(day.d)+' · '+day.t+'</h2><small style="color:#6b7770">✓ = durata calcolata sul percorso stradale (la seconda cifra include il traffico). Le altre sono stime: tocca una tappa → Indicazioni per i tempi aggiornati.</small>';
   const ls=$('list');ls.innerHTML='';
   a.forEach(it=>{
-    if(it.p&&it.m){const g=document.createElement('div');g.className='leg';g.textContent='↓ '+it.m;ls.appendChild(g)}
+    if(it.p&&it.m){const g=document.createElement('div');g.className='leg';g.textContent='↓ '+it.m;it.g=g;ls.appendChild(g)}
     const e=document.createElement('div');e.className='it';
     e.innerHTML='<span>'+it.k+'</span><b>'+it.n+'</b><small>'+(it.t||'')+'</small>';
     e.onclick=()=>{card(it);map.setView(it.c,13)};ls.appendChild(e)});
@@ -168,16 +196,18 @@ function show(i){
   if(s){const d=document.createElement('details');d.open=a.filter(x=>x.k=='📍').length<2;
     d.innerHTML='<summary>💡 Suggerimenti a '+s.n+'</summary>'+s.l.map(x=>'<div class="it"><div style="flex:1"><b>'+x[0]+'</b><br><small>'+x[1]+'</small></div><a href="'+photo(x[0]+' '+s.n)+'" target="_blank" rel="noopener">Foto</a><a href="'+gm(x[0]+', '+s.n)+'" target="_blank" rel="noopener">Mappa</a></div>').join('');
     ls.appendChild(d)}
+  enrich(a,i);
 }
 function card(it){
   const lk=(u,t)=>'<a href="'+u+'" target="_blank" rel="noopener">'+t+'</a>';
-  $('sheet').innerHTML='<button class="x" onclick="this.parentNode.classList.remove(\'open\')">✕</button><h3 style="margin:0">'+it.k+' '+it.n+'</h3>'+(it.t?'<p><b>Orario:</b> '+it.t+'</p>':'')+(it.p&&it.m?'<p><b>Spostamento da '+it.p.n+':</b> '+it.m+'</p>':'')+(it.x?'<p>'+it.x+'</p>':'')+lk(gm(it.q),'Apri su Google Maps')+(it.p&&it.m&&!/volo|treno/i.test(it.m)?lk(dir(it.p.q,it.q,it.m),'Indicazioni'):'')+(it.b?lk(it.b,'Apri su Booking'):'');
+  $('sheet').innerHTML='<button class="x" onclick="this.parentNode.classList.remove(\'open\')">✕</button><h3 style="margin:0">'+it.k+' '+it.n+'</h3>'+(it.t?'<p><b>Orario:</b> '+it.t+'</p>':'')+(it.p&&it.m?'<p><b>Spostamento da '+it.p.n+':</b> '+(it.rm?it.rm+' (calcolato sul percorso stradale)':it.m)+'</p>':'')+(it.x?'<p>'+it.x+'</p>':'')+lk(gm(it.q),'Apri su Google Maps')+(it.p&&it.m&&!/volo|treno/i.test(it.m)?lk(dir(it.p.q,it.q,it.m),'Indicazioni'):'')+(it.b?lk(it.b,'Apri su Booking'):'');
   $('sheet').classList.add('open');
 }
 D.forEach((d,i)=>{const b=document.createElement('button');b.textContent=lab(d.d);b.onclick=()=>show(i);$('days').appendChild(b)});
 const t=new Date().toISOString().slice(0,10),s=D.findIndex(d=>d.d===t);
 show(s<0?0:s);
 setTimeout(()=>map.invalidateSize(),200);
+warm();
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js');
 </script>
 </body>
