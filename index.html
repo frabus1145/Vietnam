@@ -4,6 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Vietnam 2026/27</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#1f7a5c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Vietnam">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
 *{box-sizing:border-box}
@@ -57,7 +64,9 @@ const D=[
 ];
 const $=i=>document.getElementById(i);
 const map=L.map('map').setView([16,106],5);
-L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
+const MAPTILER_KEY=""; // incolla qui la chiave MapTiler, tra le virgolette
+const tiles=MAPTILER_KEY?'https://api.maptiler.com/maps/streets-v2/256/{z}/{x}/{y}.png?key='+MAPTILER_KEY:'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+L.tileLayer(tiles,{maxZoom:19,crossOrigin:true,attribution:MAPTILER_KEY?'© MapTiler © OpenStreetMap contributors':'© OpenStreetMap'}).addTo(map);
 const layer=L.layerGroup().addTo(map);
 const gm=q=>'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(q);
 const lab=d=>new Date(d+'T12:00').toLocaleDateString('it-IT',{day:'numeric',month:'short'});
@@ -88,6 +97,7 @@ D.forEach((d,i)=>{const b=document.createElement('button');b.textContent=lab(d.d
 const t=new Date().toISOString().slice(0,10),s=D.findIndex(d=>d.d===t);
 show(s<0?0:s);
 setTimeout(()=>map.invalidateSize(),200);
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js');
 </script>
 </body>
 </html>
