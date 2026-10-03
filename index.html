@@ -32,6 +32,19 @@ body{margin:0;font-family:system-ui,-apple-system,sans-serif;background:#f6f4ef;
 .leg{margin:4px 0 0 18px;color:#6b7770;font-size:13px}
 details{margin-top:14px}summary{font-weight:600;padding:6px 2px}
 .it a{color:#1f7a5c;font-size:13px;text-decoration:none;border:1px solid #1f7a5c;border-radius:8px;padding:4px 8px}
+#sheet{max-height:60vh;overflow:auto;overscroll-behavior:contain;will-change:transform;transition:transform .38s cubic-bezier(.2,.8,.2,1)}
+#days{scroll-behavior:smooth;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}#days button{scroll-snap-align:center;transition:background .2s,color .2s}
+.it,.leg{animation:in .3s cubic-bezier(.2,.8,.2,1) both}
+@keyframes in{from{opacity:0;transform:translateY(8px)}}
+.pin{animation:pop .35s cubic-bezier(.2,1.4,.4,1) both}
+@keyframes pop{from{transform:scale(.3);opacity:0}}
+.tk{background:#eef6f2;border-radius:10px;padding:10px 12px;margin:8px 0;line-height:1.5;font-size:14px}
+.chips{display:flex;gap:8px;margin-top:10px}
+.chips button,.pill{border:1px solid #1f7a5c;background:#fff;color:#1f7a5c;border-radius:20px;padding:7px 12px;font-size:14px}
+.fx{display:flex;gap:10px;margin:10px 0}.fx label{flex:1;font-size:13px;color:#6b7770}
+.fx input{width:100%;margin-top:4px;padding:10px;border:1px solid #d6d1c4;border-radius:10px;font-size:18px;background:#fff;color:#1d2a26}
+.rst{width:28px;height:28px;line-height:26px;text-align:center;font-size:16px;background:#fff;border:1px solid #d6d1c4;border-radius:50%;box-shadow:0 1px 4px #0003;animation:pop .35s cubic-bezier(.2,1.4,.4,1) both}
+#sheet ul{padding-left:20px}
 </style>
 </head>
 <body>
@@ -56,6 +69,8 @@ DAD={n:"Aeroporto di Da Nang",c:[16.0439,108.1994],q:"Da Nang International Airp
 HAN={n:"Aeroporto di Noi Bai",c:[21.2212,105.8072],q:"Noi Bai International Airport"},
 MAR={n:"Tuan Chau Marina",c:[20.9507,106.9923],q:"Tuan Chau Marina, Ha Long"},
 NHW={n:"Nguyễn Huệ Walking Street",c:[10.7742,106.7036],q:"Nguyen Hue Walking Street, Ho Chi Minh"};
+const FL=["✈️ Vietnam Airlines","Ho Chi Minh (SGN) → Da Nang (DAD)","Partenza 14:25 · arrivo 15:55","Durata circa 1h30"];
+const TR=["🚆 Treno notturno Laman Express","Da Nang → Ninh Binh","Partenza 18:05 (3 gen) · arrivo 9:15 (4 gen)","Durata circa 15h10 · circa 700 km"];
 // h = hotel; m = durata dello spostamento dalla tappa precedente (stima); cy = città per le ricerche su Google Maps; sg = suggerimenti
 const D=[
 {d:"2026-12-29",t:"Partenza e arrivo a Ho Chi Minh",cy:"",s:[
@@ -72,15 +87,15 @@ const D=[
 {n:"Vinhomes Central Park",c:[10.795,106.7218],m:"Circa 15–20 min in taxi/Grab",x:"Parco sul fiume con vista sui grattacieli"},
 {n:"Saigon Japan Town",c:[10.7826,106.7045],m:"Circa 15–20 min in taxi/Grab",x:"Un piccolo angolo di Giappone, per finire la giornata"}]},
 {d:"2026-12-31",t:"Cu Chi, Delta del Mekong e Capodanno",cy:"Ho Chi Minh",s:[
-{h:"g8",t:"Ritiro verso le 7:30"},
-{n:"Tunnel di Cu Chi",c:[11.1428,106.4627],m:"Circa 1h30–2h in bus",x:"Tunnel usati durante la guerra del Vietnam"},
-{n:"Delta del Mekong (My Tho)",c:[10.36,106.36],m:"Circa 2h–2h30 in bus",x:"Pranzo in ristorante locale e giro in sampan. Escursione di 11 ore in tutto"},
-{h:"g8",t:"Rientro verso le 18:30",m:"Circa 2h in bus"},
-{...NHW,t:"Fino a mezzanotte",m:"Circa 10 min in taxi/Grab",x:"Capodanno con palco e DJ, fuochi d'artificio sul fiume"}]},
+{h:"g8",t:"Ritiro verso le 7:30",x:"Tour di 10–11 ore con Vietnam Adventure Tours: l'orario esatto arriva via e-mail entro 1 giorno dalla prenotazione. Se l'hotel è fuori dall'area di ritiro, punto d'incontro entro le 7:30 in 123 Lý Tự Trọng, Distretto 1"},
+{n:"Tunnel di Cu Chi",c:[11.1428,106.4627],m:"Circa 1h30 in bus (dato del tour)",nr:1,x:"Visita di circa 3 ore ai tunnel della guerra, con possibilità di strisciare in alcuni tratti e, a pagamento, il poligono di tiro. Poi pranzo vietnamita in un ristorante locale"},
+{n:"Delta del Mekong (My Tho)",c:[10.36,106.36],m:"Circa 2h–2h30 in bus",x:"Circa 2 ore tra crociera sul Mekong e giro in sampan sui canali di palme da cocco, visita a una casa locale con frutta fresca, tè al miele e musica folk"},
+{n:"Mercato di Ben Thanh",c:[10.7725,106.698],t:"Rientro verso le 19:00",m:"Circa 2h in bus",x:"Punto di rientro del tour (in alternativa 123 Lý Tự Trọng, Distretto 1)"},
+{...NHW,t:"Fino a mezzanotte",m:"Circa 15 min a piedi",x:"Capodanno con palco e DJ, fuochi d'artificio sul fiume"}]},
 {d:"2027-01-01",t:"Volo per Da Nang e prima sera a Hoi An",cy:"Hoi An",s:[
 {h:"g8"},
-{...SGN,t:"14:25",m:"Circa 30–40 min in taxi/Grab",x:"Volo Vietnam Airlines"},
-{...DAD,t:"15:55",m:"Volo di circa 1h30",x:"Arrivo a Da Nang"},
+{...SGN,t:"14:25",m:"Circa 30–40 min in taxi/Grab",x:"Volo interno",tk:FL},
+{...DAD,t:"15:55",m:"Volo di circa 1h30",x:"Arrivo a Da Nang",tk:FL},
 {h:"hoian",m:"Circa 45 min in taxi/Grab"},
 {n:"Ponte Coperto Giapponese (Chua Cau)",c:[15.8772,108.3263],m:"Circa 10 min in taxi/Grab",x:"Icona della città vecchia, patrimonio Unesco"},
 {n:"Sala Assemblee Phuoc Kien",c:[15.8774,108.3295],m:"5 min a piedi",x:"Sala dedicata alla dea del mare"},
@@ -93,9 +108,10 @@ const D=[
 {n:"Città vecchia e fiume Thu Bon",c:[15.8772,108.3275],m:"Circa 10–15 min in taxi/Grab",x:"Nel pomeriggio, poi la sera per lo spettacolo delle lanterne. Cena da Home Taste"}]},
 {d:"2027-01-03",t:"Hoi An e treno notturno",cy:"Hoi An",sg:"hoian",s:[
 {h:"hoian"},
-{n:"Stazione di Da Nang",c:[16.0713,108.2093],t:"18:05",m:"Circa 45–55 min in taxi/Grab",x:"Treno notturno Laman Express, arrivo a Ninh Binh alle 9:15 del 4 gennaio"}]},
+{n:"Stazione di Da Nang",c:[16.0713,108.2093],t:"18:05",m:"Circa 45–55 min in taxi/Grab",x:"Partenza del treno notturno",tk:TR},
+{n:"Stazione di Ninh Binh",c:[20.2476,105.9757],t:"9:15 del 4 gen",m:"Treno notturno di circa 15 ore",rt:[[16.258,108.069],[16.4568,107.5851,"Huế"],[16.8181,107.0959,"Đông Hà"],[17.4757,106.616,"Đồng Hới"],[18.676,105.677,"Vinh"],[19.8095,105.779,"Thanh Hóa"]],x:"Arrivo del treno. Il percorso sulla mappa è indicativo e segue le principali stazioni della linea",tk:TR}]},
 {d:"2027-01-04",t:"Arrivo a Ninh Binh",cy:"Ninh Binh",sg:"nb",s:[
-{n:"Stazione di Ninh Binh",c:[20.2476,105.9757],t:"9:15",x:"Arrivo del treno notturno (circa 15 ore di viaggio)"},
+{n:"Stazione di Ninh Binh",c:[20.2476,105.9757],t:"9:15",x:"Arrivo del treno notturno da Da Nang",tk:TR},
 {h:"nb",m:"Circa 20 min in taxi/Grab"}]},
 {d:"2027-01-05",t:"Ninh Binh",cy:"Ninh Binh",sg:"nb",s:[
 {h:"nb"},
@@ -103,13 +119,13 @@ const D=[
 {n:"Hang Mua (Mua Cave)",c:[20.2155,105.9382],m:"Circa 25 min in taxi/Grab",x:"Circa 500 gradini per la vista più famosa del Vietnam: il fiume Ngo Dong tra le montagne di Tam Coc. In cima la statua di un drago"},
 {n:"Pagoda di Bich Dong",c:[20.206,105.925],m:"Circa 10 min in taxi/Grab",x:"Tempio costruito nella roccia, si arriva da un ponte di pietra"}]},
 {d:"2027-01-06",t:"Crociera Ha Long e Lan Ha (giorno 1)",cy:"Ha Long",s:[
-{h:"nb",t:"Ritiro alle 7:00"},
-{...MAR,m:"Circa 3 ore in transfer (con passaggio a Hanoi verso le 8:00)",x:"Imbarco sulla crociera di 2 giorni. Pranzo a bordo; nel pomeriggio kayak o barca di bambù verso una grotta, oppure la spiaggia di Ba Trai Dao. Possibili lezione di cucina, cena e pesca a bordo"},
-{n:"Baia di Lan Ha",c:[20.77,107.03],m:"Navigazione di circa 1 ora",x:"Notte a bordo"}]},
+{h:"nb",t:"Ritiro alle 7:00",x:"Il ritiro a Ninh Binh va richiesto via e-mail al fornitore (Ha Long Bay Lux Cruises, Marvel Travel)"},
+{...MAR,t:"12:00 imbarco",m:"Circa 3h50 in transfer: passaggio a Hanoi alle 8:00 e sosta di 20 min",nr:1,x:"Limousine bus fino al porto. Dalle 12:00 trasferimento alla nave, drink di benvenuto, check-in in cabina con balcone e pranzo a buffet"},
+{n:"Baia di Lan Ha",c:[20.77,107.03],m:"Navigazione verso la baia",x:"Nel pomeriggio, a scelta: Grotta Oscura e Luminosa (circa 1 ora, kayak o barca di bambù, poi nuotata) oppure area di Tra Bau (kayak e nuoto). Al tramonto tè o caffè e lezione di involtini primavera, cena di pesce, poi bar panoramico o pesca notturna dei calamari. Notte in cabina"}]},
 {d:"2027-01-07",t:"Crociera (giorno 2) e rientro a Hanoi",cy:"Ha Long",s:[
-{n:"Baia di Lan Ha",c:[20.77,107.03],x:"Tai Chi all'alba sul ponte e colazione; poi kayak nell'area di Ao Ech o visita dell'isola di Lan Ha. Check-out e brunch a bordo"},
-{...MAR,m:"Navigazione di circa 1 ora",x:"Sbarco al porto"},
-{h:"hn",t:"Arrivo verso le 15:00",m:"Circa 2h30–3h in transfer"}]},
+{n:"Baia di Lan Ha",c:[20.77,107.03],x:"Tai Chi all'alba e colazione leggera. Poi a scelta: grotta di Trung Trang / Quan Y sull'isola di Cat Ba oppure area di Ao Ech (kayak e nuoto). Check-out e brunch a bordo durante il rientro"},
+{...MAR,m:"Navigazione di rientro (durata non indicata dal fornitore)",x:"Sbarco a Tuan Chau"},
+{h:"hn",t:"Arrivo verso le 15:00",m:"Circa 2h30 in bus limousine",x:"Rientro nel Quartiere Vecchio"}]},
 {d:"2027-01-08",t:"Hanoi",cy:"Hanoi",sg:"hn",s:[
 {h:"hn"},
 {n:"Pagoda Tran Quoc",c:[21.0486,105.8365],m:"Circa 15 min in taxi/Grab",x:"La più antica pagoda di Hanoi, sul Lago dell'Ovest"},
@@ -133,11 +149,26 @@ hoian:{n:"Hoi An",l:[["Biglietto cumulativo della città vecchia","Ticket di 3 g
 nb:{n:"Ninh Binh",l:[["Hoa Lu, antica capitale","Templi dei re Dinh e Le, vicino alla zona dell'hotel"],["Pagoda di Bai Dinh","Il complesso buddista più grande del Vietnam"],["Giro in barca a Tam Coc","Alternativa a Trang An, tra risaie e grotte"],["Riserva di Van Long","Zona umida da esplorare in barca, con possibili avvistamenti di langur"],["Parco nazionale di Cuc Phuong","Foresta pluviale, escursione di una giornata"]]},
 hn:{n:"Hanoi",l:[["Prigione di Hoa Lo","Museo nell'ex prigione coloniale"],["Bun cha e pho nel Quartiere Vecchio","Street food tipico di Hanoi"],["Ponte Long Bien","Ponte in ferro di epoca francese, bello al tramonto"],["Mercato notturno del weekend","Venerdì, sabato e domenica sera nel Quartiere Vecchio (il 9 gennaio è sabato)"],["Museo di Etnologia","Le culture delle 54 etnie del Vietnam"]]}
 };
+const CITY={"Ho Chi Minh":"hcm","Hoi An":"hoian","Ninh Binh":"nb","Hanoi":"hn","Ha Long":"hl"};
+const CC={hcm:[10.78,106.7],hoian:[15.877,108.327],nb:[20.25,105.9],hn:[21.03,105.85],hl:[20.9,107.1]};
+const W={
+hcm:{n:"Ho Chi Minh e Delta del Mekong",t:"circa 23–32 °C",s:"Stagione secca: soleggiato, poca pioggia, caldo e umido.",a:["Abiti leggeri e traspiranti","Cappello e crema solare","Scarpe chiuse comode per i tunnel di Cu Chi","Una felpa leggera per i locali con aria condizionata"]},
+hoian:{n:"Hoi An e Da Nang",t:"circa 19–25 °C",s:"Fresco e umido, con giornate nuvolose e possibili piogge.",a:["Strati leggeri: maglietta e felpa","Giacca antipioggia leggera o ombrello","Scarpe che si asciugano in fretta","Una felpa per la sera sul fiume"]},
+nb:{n:"Ninh Binh",t:"circa 11–19 °C",s:"Fresco e spesso grigio, con umidità e qualche pioggerella.",a:["Vestiti a strati: felpa o pile e giacca","Pantaloni lunghi","Giacca antipioggia","Scarpe comode con buona suola per i 500 gradini di Hang Mua"]},
+hn:{n:"Hanoi",t:"circa 12–19 °C",s:"Inverno fresco e umido, cielo spesso coperto.",a:["Strati caldi: maglione o pile e giacca a vento","Sciarpa per la sera","Giacca antipioggia","Scarpe chiuse"]},
+hl:{n:"Baia di Ha Long e Lan Ha",t:"circa 11–17 °C",s:"Fresco, ventoso sull'acqua e spesso con foschia.",a:["Giacca a vento e maglione caldo, soprattutto per il Tai Chi all'alba","Cappello e guanti leggeri","Scarpe con suola antiscivolo per il ponte","Il bagno in mare può essere molto freddo"]}
+};
+const R={
+hcm:{n:"Ho Chi Minh",l:[["Bánh Mì Huỳnh Hoa","Il banh mi più famoso della città (26 Lê Thị Riêng)",[10.7714,106.6915]],["Phở Hòa Pasteur","Zuppa di noodles storica, sulla via del tuo hotel (260C Pasteur)",[10.784,106.688]],["Cục Gạch Quán","Cucina vietnamita casalinga in una vecchia casa (10 Đặng Tất)",[10.7895,106.6905]],["The Café Apartments","Palazzo di caffè in Nguyễn Huệ, per l'egg coffee (dal tuo programma)",[10.7746,106.704]],["Bánh Mì Me In","Per mangiare il banh mi seduti, vicino a Ben Thanh (dal tuo programma)"]]},
+hoian:{n:"Hoi An",l:[["Bánh Mì Phượng","Il banh mi più noto di Hoi An (2B Phan Châu Trinh)",[15.8765,108.3305]],["Cao Lầu Thanh","Il piatto tipico di Hoi An: noodles con maiale (26 Thái Phiên)",[15.879,108.3335]],["Hoi An Cuisine Restaurant 73","Cena del 1 gennaio (dal tuo programma)"],["Roving Chill House","Pranzo del 2 gennaio, vicino alle risaie di Cam Chau (dal tuo programma)",[15.883,108.343]],["Home Taste","Cena del 2 gennaio (dal tuo programma)"]]},
+nb:{n:"Ninh Binh",l:[["Dê núi (capra di montagna)","Il piatto tipico di Ninh Binh: cerca i locali intorno a Tam Coc e Trang An"],["Cơm cháy (riso croccante)","Specialità locale da assaggiare come antipasto"]]},
+hn:{n:"Hanoi",l:[["Bún Chả Hương Liên","Il locale del bun cha dove mangiarono Obama e Anthony Bourdain (24 Lê Văn Hưu)",[21.0182,105.8497]],["Phở Gia Truyền Bát Đàn","Pho storico e semplice (49 Bát Đàn)",[21.0343,105.8467]],["Chả Cá Thăng Long","Il pesce alla piastra con aneto, tipico di Hanoi (21 Đường Thành)",[21.0341,105.8456]],["Cafè Giang","L'egg coffee originale (dal tuo programma)",[21.0335,105.8525]],["The Note Coffee","Il bar coi post-it (dal tuo programma)",[21.0338,105.8534]]]}
+};
 const $=i=>document.getElementById(i);
-const map=L.map('map').setView([16,106],5);
+const map=L.map('map',{zoomSnap:.25,zoomDelta:.5}).setView([16,106],5);
 const MAPTILER_KEY=""; // incolla qui la chiave MapTiler, tra le virgolette
 const tiles=MAPTILER_KEY?'https://api.maptiler.com/maps/streets-v2/256/{z}/{x}/{y}.png?key='+MAPTILER_KEY:'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
-L.tileLayer(tiles,{maxZoom:19,crossOrigin:true,attribution:MAPTILER_KEY?'© MapTiler © OpenStreetMap contributors':'© OpenStreetMap'}).addTo(map);
+L.tileLayer(tiles,{maxZoom:19,keepBuffer:4,crossOrigin:true,attribution:MAPTILER_KEY?'© MapTiler © OpenStreetMap contributors':'© OpenStreetMap'}).addTo(map);
 const layer=L.layerGroup().addTo(map);
 const gm=q=>'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(q);
 const lab=d=>new Date(d+'T12:00').toLocaleDateString('it-IT',{day:'numeric',month:'short'});
@@ -145,14 +176,14 @@ const dir=(a,b,m)=>'https://www.google.com/maps/dir/?api=1&origin='+encodeURICom
 const photo=q=>'https://www.google.com/search?tbm=isch&q='+encodeURIComponent(q);
 function items(day){
   return day.s.map(x=>{
-    if(x.h){const k=H[x.h];return {n:k.n,c:k.c,x:k.a,k:'🏨',q:k.a,b:k.b,m:x.m,t:x.t}}
+    if(x.h){const k=H[x.h];return {n:k.n,c:k.c,x:x.x?x.x+' · '+k.a:k.a,k:'🏨',q:k.a,b:k.b,m:x.m,t:x.t}}
     return {...x,k:'📍',q:x.q||x.n+(day.cy?', '+day.cy:'')};
   });
 }
-let cur=-1;
+let cur=-1,first=true;
 const CK='vn-legs-v1';let LC={};try{LC=JSON.parse(localStorage.getItem(CK)||'{}')}catch(e){}
 const key=(a,b)=>a.c.join(',')+'>'+b.c.join(',');
-const road=it=>it.p&&it.m&&!/volo|treno|navigazione/i.test(it.m);
+const road=it=>it.p&&it.m&&!it.nr&&!/volo|treno|navigazione/i.test(it.m);
 const fm=s=>s>=3600?Math.floor(s/3600)+'h'+String(Math.round(s%3600/60)).padStart(2,'0'):Math.round(s/60)+' min';
 function real(it,l){const w=/piedi/.test(it.m),m=w?l.d/1000/4.8*3600:l.s,hi=w?m:m*(l.d<25000?1.4:1.2);
   return (w?'A piedi ':'')+'circa '+(hi>m*1.05?fm(m).replace(' min','')+'–'+fm(hi):fm(m))+' · '+(l.d/1000).toFixed(1).replace('.',',')+' km'}
@@ -177,21 +208,54 @@ async function enrich(a,i){
   }
 }
 async function warm(){for(let i=0;i<D.length;i++){const a=items(D[i]);for(let j=1;j<a.length;j++){a[j].p=a[j-1];if(road(a[j]))try{await leg(a[j-1],a[j])}catch(e){}}}}
+const rl=L.layerGroup().addTo(map);
+const WC=c=>c==0?'Sereno':c<=2?'Poco nuvoloso':c==3?'Coperto':c<=48?'Nebbia':c<=57?'Pioviggine':c<=67?'Pioggia':c<=77?'Neve':c<=82?'Rovesci':'Temporale';
+function sheet(html){const s=$('sheet');s.innerHTML='<button class="x" onclick="this.parentNode.classList.remove(\'open\')">✕</button>'+html;s.classList.add('open')}
+async function wx(la,lo){const r=await fetch('https://api.open-meteo.com/v1/forecast?latitude='+la+'&longitude='+lo+'&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code&timezone=auto&forecast_days=16');return r.json()}
+function weatherSheet(day){
+  const k=CITY[day.cy],w=W[k];
+  sheet('<h3 style="margin:0">☀️ Meteo · '+w.n+'</h3><p><b>Di solito tra fine dicembre e gennaio:</b> '+w.t+'<br>'+w.s+'</p><b>Cosa mettere in valigia</b><ul style="margin:6px 0">'+w.a.map(x=>'<li>'+x+'</li>').join('')+'</ul><div id="wf" class="tk">Previsione per questo giorno: controllo…</div><button id="wl" class="pill">📍 Meteo dove sei ora</button><div id="wn" class="tk" style="display:none"></div><small style="color:#6b7770">Valori climatici indicativi, non previsioni.</small>');
+  wx(CC[k][0],CC[k][1]).then(j=>{const i=j.daily.time.indexOf(day.d);
+    $('wf').innerHTML=i<0?'Previsione per questo giorno: disponibile solo nei 16 giorni prima della data.':'Previsione per questo giorno: <b>'+Math.round(j.daily.temperature_2m_min[i])+'–'+Math.round(j.daily.temperature_2m_max[i])+' °C</b> · '+WC(j.daily.weather_code[i])+' · pioggia '+j.daily.precipitation_probability_max[i]+'%'}).catch(()=>{$('wf').textContent='Previsione per questo giorno: serve la connessione a internet.'});
+  $('wl').onclick=()=>{const n=$('wn');n.style.display='block';n.textContent='Cerco la tua posizione…';
+    if(!navigator.geolocation){n.textContent='Posizione non disponibile su questo dispositivo.';return}
+    navigator.geolocation.getCurrentPosition(p=>wx(p.coords.latitude,p.coords.longitude).then(j=>{const c=j.current;
+      n.innerHTML='<b>Adesso: '+Math.round(c.temperature_2m)+' °C</b> (percepita '+Math.round(c.apparent_temperature)+' °C) · '+WC(c.weather_code)+' · vento '+Math.round(c.wind_speed_10m)+' km/h<br>Oggi: '+Math.round(j.daily.temperature_2m_min[0])+'–'+Math.round(j.daily.temperature_2m_max[0])+' °C · pioggia '+j.daily.precipitation_probability_max[0]+'%'}).catch(()=>{n.textContent='Serve la connessione a internet.'}),()=>{n.textContent='Posizione non autorizzata: consenti l\'accesso alla posizione per questo sito.'},{timeout:10000})}
+}
+let FX={r:29500,t:0};try{FX=JSON.parse(localStorage.getItem('vn-fx'))||FX}catch(e){}
+async function fxLoad(){try{const j=await(await fetch('https://open.er-api.com/v6/latest/EUR')).json();if(j.rates&&j.rates.VND){FX={r:j.rates.VND,t:Date.now()};try{localStorage.setItem('vn-fx',JSON.stringify(FX))}catch(e){}}}catch(e){}}
+function fxSheet(){
+  sheet('<h3 style="margin:0">💱 Convertitore euro ↔ dong</h3><div class="fx"><label>Euro<input id="fe" type="number" inputmode="decimal" placeholder="€"></label><label>Dong<input id="fv" type="number" inputmode="numeric" placeholder="₫"></label></div><div id="fr" class="tk"></div>');
+  const info=()=>{$('fr').innerHTML='1 € = '+Math.round(FX.r).toLocaleString('it-IT')+' ₫<br><small>'+(FX.t?'Tasso aggiornato il '+new Date(FX.t).toLocaleDateString('it-IT'):'Tasso di riserva (stima): collegati a internet per aggiornarlo')+'</small>'};
+  info();
+  $('fe').oninput=()=>{$('fv').value=$('fe').value?Math.round($('fe').value*FX.r):''};
+  $('fv').oninput=()=>{$('fe').value=$('fv').value?($('fv').value/FX.r).toFixed(2):''};
+  fxLoad().then(()=>{info();if($('fe').value)$('fe').oninput()});
+}
+document.addEventListener('click',e=>{if(!$('sheet').contains(e.target))$('sheet').classList.remove('open')},true);
 function show(i){
   const day=D[i],a=items(day);
-  [...$('days').children].forEach((b,j)=>b.classList.toggle('on',j==i));
+  [...$('days').children].forEach((b,j)=>{b.classList.toggle('on',j==i);if(j==i)b.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'})});
   $('sheet').classList.remove('open');
-  layer.clearLayers();
+  layer.clearLayers();rl.clearLayers();
   a.forEach((it,j)=>{it.p=a[j-1];L.marker(it.c,{icon:L.divIcon({className:'',html:'<div class="pin">'+(j+1)+'</div>',iconSize:[26,26]})}).on('click',()=>card(it)).addTo(layer)});
   cur=i;a.forEach((it,j)=>{if(j)it.pl=L.polyline([a[j-1].c,it.c],{color:'#1f7a5c',weight:3,dashArray:'6 6'}).addTo(layer)});
-  map.fitBounds(a.map(x=>x.c),{padding:[40,40],maxZoom:13});
-  $('info').innerHTML='<h2>'+lab(day.d)+' · '+day.t+'</h2><small style="color:#6b7770">✓ = durata calcolata sul percorso stradale (la seconda cifra include il traffico). Le altre sono stime: tocca una tappa → Indicazioni per i tempi aggiornati.</small>';
+  a.forEach(it=>{if(it.rt){it.pl&&layer.removeLayer(it.pl);it.pl=L.polyline([it.p.c,...it.rt.map(r=>[r[0],r[1]]),it.c],{color:'#c2410c',weight:4}).addTo(layer);it.rt.forEach(r=>{if(r[2])L.circleMarker([r[0],r[1]],{radius:5,color:'#c2410c',fillColor:'#fff',fillOpacity:1,weight:2}).bindTooltip(r[2]).addTo(layer)})}});
+  const pts=a.flatMap(x=>[x.c,...(x.rt||[]).map(r=>[r[0],r[1]])]);
+  if(first){map.fitBounds(pts,{padding:[40,40],maxZoom:13,animate:false});first=false}else map.flyToBounds(pts,{padding:[40,40],maxZoom:13,duration:1.1});
+  $('info').innerHTML='<h2>'+lab(day.d)+' · '+day.t+'</h2><small style="color:#6b7770">✓ = durata calcolata sul percorso stradale (la seconda cifra include il traffico). Le altre sono stime: tocca una tappa → Indicazioni per i tempi aggiornati.</small><div class="chips">'+(CITY[day.cy]?'<button id="bw">☀️ Meteo</button>':'')+'<button id="bf">💱 Valuta</button></div>';
+  if($('bw'))$('bw').onclick=()=>weatherSheet(day);$('bf').onclick=fxSheet;
   const ls=$('list');ls.innerHTML='';
-  a.forEach(it=>{
+  a.forEach((it,ix)=>{
     if(it.p&&it.m){const g=document.createElement('div');g.className='leg';g.textContent='↓ '+it.m;it.g=g;ls.appendChild(g)}
-    const e=document.createElement('div');e.className='it';
+    const e=document.createElement('div');e.className='it';e.style.animationDelay=Math.min(ix*30,300)+'ms';
     e.innerHTML='<span>'+it.k+'</span><b>'+it.n+'</b><small>'+(it.t||'')+'</small>';
-    e.onclick=()=>{card(it);map.setView(it.c,13)};ls.appendChild(e)});
+    e.onclick=()=>{card(it);map.flyTo(it.c,14,{duration:.8})};ls.appendChild(e)});
+  const rk=R[CITY[day.cy]];
+  if(rk){const d=document.createElement('details');
+    d.innerHTML='<summary>🍜 Dove mangiare a '+rk.n+'</summary>'+rk.l.map(x=>'<div class="it"><div style="flex:1"><b>'+x[0]+'</b><br><small>'+x[1]+'</small></div><a href="'+gm(x[0]+', '+rk.n)+'" target="_blank" rel="noopener">Mappa</a></div>').join('')+'<p style="color:#6b7770;font-size:13px">Sulla mappa le 🍜 sono posizioni approssimative e non fanno parte del percorso: per il punto esatto usa il pulsante Mappa.</p>';
+    d.addEventListener('toggle',()=>{rl.clearLayers();if(d.open)rk.l.forEach(x=>{if(x[2])L.marker(x[2],{icon:L.divIcon({className:'',html:'<div class="rst">🍜</div>',iconSize:[28,28]})}).on('click',()=>card({n:x[0],k:'🍜',x:x[1],q:x[0]+', '+rk.n,c:x[2]})).addTo(rl)})});
+    ls.appendChild(d)}
   const s=S[day.sg];
   if(s){const d=document.createElement('details');d.open=a.filter(x=>x.k=='📍').length<2;
     d.innerHTML='<summary>💡 Suggerimenti a '+s.n+'</summary>'+s.l.map(x=>'<div class="it"><div style="flex:1"><b>'+x[0]+'</b><br><small>'+x[1]+'</small></div><a href="'+photo(x[0]+' '+s.n)+'" target="_blank" rel="noopener">Foto</a><a href="'+gm(x[0]+', '+s.n)+'" target="_blank" rel="noopener">Mappa</a></div>').join('');
@@ -200,14 +264,18 @@ function show(i){
 }
 function card(it){
   const lk=(u,t)=>'<a href="'+u+'" target="_blank" rel="noopener">'+t+'</a>';
-  $('sheet').innerHTML='<button class="x" onclick="this.parentNode.classList.remove(\'open\')">✕</button><h3 style="margin:0">'+it.k+' '+it.n+'</h3>'+(it.t?'<p><b>Orario:</b> '+it.t+'</p>':'')+(it.p&&it.m?'<p><b>Spostamento da '+it.p.n+':</b> '+(it.rm?it.rm+' (calcolato sul percorso stradale)':it.m)+'</p>':'')+(it.x?'<p>'+it.x+'</p>':'')+lk(gm(it.q),'Apri su Google Maps')+(it.p&&it.m&&!/volo|treno/i.test(it.m)?lk(dir(it.p.q,it.q,it.m),'Indicazioni'):'')+(it.b?lk(it.b,'Apri su Booking'):'');
+  $('sheet').innerHTML='<button class="x" onclick="this.parentNode.classList.remove(\'open\')">✕</button><h3 style="margin:0">'+it.k+' '+it.n+'</h3>'+(it.t?'<p><b>Orario:</b> '+it.t+'</p>':'')+(it.p&&it.m?'<p><b>Spostamento da '+it.p.n+':</b> '+(it.rm?it.rm+' (calcolato sul percorso stradale)':it.m)+'</p>':'')+(it.x?'<p>'+it.x+'</p>':'')+(it.tk?'<div class="tk">'+it.tk.join('<br>')+'</div>':'')+lk(gm(it.q),'Apri su Google Maps')+(it.p&&it.m&&!/volo|treno/i.test(it.m)?lk(dir(it.p.q,it.q,it.m),'Indicazioni'):'')+(it.b?lk(it.b,'Apri su Booking'):'');
   $('sheet').classList.add('open');
 }
 D.forEach((d,i)=>{const b=document.createElement('button');b.textContent=lab(d.d);b.onclick=()=>show(i);$('days').appendChild(b)});
 const t=new Date().toISOString().slice(0,10),s=D.findIndex(d=>d.d===t);
 show(s<0?0:s);
 setTimeout(()=>map.invalidateSize(),200);
-warm();
+warm();fxLoad();
+(()=>{let y=0;const s=$('sheet');
+s.addEventListener('touchstart',e=>{y=e.touches[0].clientY;s.style.transition='none'},{passive:true});
+s.addEventListener('touchmove',e=>{const d=e.touches[0].clientY-y;if(d>0&&s.scrollTop<=0)s.style.transform='translateY('+d+'px)'},{passive:true});
+s.addEventListener('touchend',e=>{s.style.transition='';s.style.transform='';if(e.changedTouches[0].clientY-y>80&&s.scrollTop<=0)s.classList.remove('open')});})();
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js');
 </script>
 </body>
