@@ -355,6 +355,7 @@ s.addEventListener('touchstart',e=>{y=e.touches[0].clientY;s.style.transition='n
 s.addEventListener('touchmove',e=>{const d=e.touches[0].clientY-y;if(d>0&&s.scrollTop<=0)s.style.transform='translateY('+d+'px)'},{passive:true});
 s.addEventListener('touchend',e=>{s.style.transition='';s.style.transform='';if(e.changedTouches[0].clientY-y>80&&s.scrollTop<=0)closeSheet()});})();
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js');
+  
 </script>
 </body>
 </html>
