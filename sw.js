@@ -7,4 +7,5 @@ self.addEventListener('fetch',e=>{
   if(/tile\.openstreetmap\.org|api\.maptiler\.com/.test(e.request.url)){
     e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).then(put)));return}
   e.respondWith(fetch(e.request).then(put).catch(()=>caches.match(e.request).then(r=>r||(e.request.mode==='navigate'?caches.match('index.html'):Response.error()))));
+  
 });
