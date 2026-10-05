@@ -49,6 +49,9 @@ details{margin-top:14px}summary{font-weight:600;padding:6px 2px}
 #map.zm .leaflet-overlay-pane{opacity:0;transition:none}
 .nx{background:#1f7a5c;color:#fff;border-radius:12px;padding:10px 12px;margin:8px 0;cursor:pointer;line-height:1.4}
 .chips{flex-wrap:wrap}
+.sos{display:flex;gap:8px;margin:10px 0}
+.sos button{flex:1;border:1px solid #d6d1c4;background:#fff;color:#1d2a26;border-radius:12px;padding:12px 4px;font-size:13px;line-height:1.5}
+#sheet a[href^="tel:"]{display:inline-block;padding:3px 10px;margin:0 2px;font-size:14px;font-weight:600;color:#fff}
 </style>
 </head>
 <body>
@@ -250,19 +253,68 @@ function restSheet(day){
   if(pts.length)map.flyToBounds(pts,{padding:[40,40],maxZoom:15,duration:.9});
   document.querySelectorAll('#sheet .it').forEach(e=>{const x=rk.l[e.dataset.i];if(x&&x[2])e.onclick=ev=>{if(ev.target.tagName!='A')map.flyTo(x[2],16,{duration:.7})}});
 }
-const todayIso=()=>{const n=new Date();return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0')};
+const SIM=new URLSearchParams(location.search).get('prova'),nowD=()=>SIM?new Date(SIM):new Date();
+const todayIso=()=>{const n=nowD();return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0')};
 const tmin=t=>{const m=!/ del /.test(t||'')&&/(\d{1,2}):(\d{2})/.exec(t||'');return m?+m[1]*60+ +m[2]:null};
 let nxItems=[];
 function updNx(){
   const el=$('nx');if(!el)return;
   const day=D[cur];
   if(!day||day.d!==todayIso()){el.style.display='none';return}
-  const n=new Date(),now=n.getHours()*60+n.getMinutes(),a=nxItems,timed=a.filter(x=>tmin(x.t)!==null);
+  const n=nowD(),now=n.getHours()*60+n.getMinutes(),a=nxItems,timed=a.filter(x=>tmin(x.t)!==null);
   const f=timed.find(x=>tmin(x.t)>=now-5);let txt,it=null;
   if(f){it=f;const d=tmin(f.t)-now;txt='⏭️ Prossima tappa: <b>'+f.n+'</b> · '+f.t+' <small>('+(d<=0?'ora':'tra '+(d>=60?Math.floor(d/60)+'h'+(d%60?' '+d%60+' min':''):d+' min'))+')</small>'}
   else if(!timed.length){it=a.find(x=>x.k!=='🏨')||a[0];txt='📍 Oggi: <b>'+it.n+'</b>'}
   else txt='✅ Le tappe con orario di oggi sono concluse';
   el.style.display='block';el.innerHTML=txt;el.onclick=it?()=>{card(it);map.flyTo(it.c,14,{duration:.8})}:null;
+}
+const E={hcm:{n:"Consolato Generale d'Italia a Ho Chi Minh",a:"President Place, 93 Nguyễn Du, 10° piano, Distretto 1, Ho Chi Minh",tel:["+842838275445","+84 28 3827 5445"],em:["+84778010257","+84 778010257"],c:[10.778,106.6955]},
+hn:{n:"Ambasciata d'Italia a Hanoi",a:"9 Lê Phụng Hiểu, Hoàn Kiếm, Hanoi",tel:["+842438256256","+84 24 3825 6256"],em:["+84903430950","+84 90 3430950"],c:[21.0245,105.8555]}};
+const SOS={h:{ic:'🏥',t:'Ospedali e medici',nm:'Struttura sanitaria',q:(a,o)=>'nwr["amenity"~"^(hospital|clinic)$"](around:5000,'+a+','+o+');',gq:'hospital'},
+a:{ic:'🏧',t:'ATM',nm:'ATM',q:(a,o)=>'nwr["amenity"="atm"](around:1000,'+a+','+o+');',gq:'ATM'}};
+const hav=(a,b)=>{const r=x=>x*Math.PI/180,s=Math.sin(r(b[0]-a[0])/2)**2+Math.cos(r(a[0]))*Math.cos(r(b[0]))*Math.sin(r(b[1]-a[1])/2)**2;return 12742000*Math.asin(Math.sqrt(s))};
+const fd=m=>m<1000?Math.round(m/10)*10+' m':(m/1000).toFixed(1).replace('.',',')+' km';
+const dirTo=d=>'https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(d)+'&travelmode=driving';
+async function osm(q){for(const u of['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter']){try{const r=await fetch(u,{method:'POST',body:q});if(r.ok)return(await r.json()).elements}catch(e){}}throw 0}
+function centerOf(day){const a=items(day),x=a.find(y=>y.k==='🏨')||a[0];return{c:x.c,n:x.n}}
+const pin=(ic,c,o)=>L.marker(c,{icon:L.divIcon({className:'',html:'<div class="rst">'+ic+'</div>',iconSize:[28,28]})}).on('click',()=>card(o)).addTo(rl);
+function sosSheet(day){
+  const k=CITY[day.cy],cn=centerOf(day);
+  sheet('<h3 style="margin:0">🆘 SOS · '+W[k].n+'</h3><div class="tk">Polizia <a href="tel:113">113</a> · Vigili del fuoco <a href="tel:114">114</a> · Ambulanza <a href="tel:115">115</a></div><div class="sos"><button id="s1">🏥<br>Ospedali e medici</button><button id="s2">🏛️<br>Ambasciata e consolato</button><button id="s3">🏧<br>ATM</button></div><small style="color:#6b7770">Gli elenchi sono calcolati vicino a: '+cn.n+'</small>');
+  $('s1').onclick=()=>sosList('h',day);$('s2').onclick=()=>embSheet(day);$('s3').onclick=()=>sosList('a',day);
+}
+function embSheet(day){
+  const k=CITY[day.cy],ks=k=='hcm'?['hcm']:k=='hoian'?['hcm','hn']:['hn'];
+  sheet('<button class="pill" id="sb">← SOS</button><h3 style="margin:8px 0 0">🏛️ Ambasciata e consolato</h3>'+(k=='hoian'?'<p>A Hoi An non c\'è una sede italiana: le più vicine sono a Ho Chi Minh e a Hanoi.</p>':k=='nb'||k=='hl'?'<p>Qui non c\'è una sede italiana: la più vicina è l\'ambasciata a Hanoi.</p>':'')
+   +ks.map(x=>{const e=E[x];return '<div class="tk"><b>'+e.n+'</b><br>'+e.a+'<br>Tel <a href="tel:'+e.tel[0]+'">'+e.tel[1]+'</a><br>Emergenze per italiani: <a href="tel:'+e.em[0]+'">'+e.em[1]+'</a><br><a href="'+gm(e.a)+'" target="_blank" rel="noopener">Mappa</a> <a href="'+dirTo(e.a)+'" target="_blank" rel="noopener">Indicazioni</a></div>'}).join('')
+   +'<small style="color:#6b7770">Numeri dai siti ufficiali del Ministero degli Esteri: controllali prima di partire. La 🏛️ sulla mappa è approssimativa.</small>');
+  $('sb').onclick=()=>sosSheet(day);
+  rmode=true;ks.forEach(x=>{const e=E[x];pin('🏛️',e.c,{n:e.n,k:'🏛️',x:e.a,q:e.a,dst:e.a})});
+  map.flyToBounds(ks.map(x=>E[x].c),{padding:[40,40],maxZoom:14,duration:.9});
+}
+async function sosList(type,day,from){
+  const S1=SOS[type],cn=from||centerOf(day);
+  sheet('<button class="pill" id="sb">← SOS</button><h3 style="margin:8px 0 0">'+S1.ic+' '+S1.t+'</h3><p id="sl">Cerco vicino a '+cn.n+'…</p>');
+  $('sb').onclick=()=>sosSheet(day);
+  const ck='vn-sos:'+type+':'+cn.c[0].toFixed(2)+','+cn.c[1].toFixed(2);let els,old=false;
+  try{els=await osm('[out:json][timeout:20];('+S1.q(cn.c[0],cn.c[1])+');out center 60;');try{localStorage.setItem(ck,JSON.stringify(els))}catch(e){}}
+  catch(e){try{els=JSON.parse(localStorage.getItem(ck));old=!!els}catch(e2){}}
+  if(!$('sl'))return;
+  const gl='<a href="'+gm(S1.gq+' near '+cn.c.join(','))+'" target="_blank" rel="noopener">Cerca su Google Maps</a>';
+  if(!els){$('sl').innerHTML='Non riesco a caricare i dati (serve internet). '+gl;return}
+  const seen={},L2=els.map(e=>{const c=e.center?[e.center.lat,e.center.lon]:[e.lat,e.lon],t=e.tags||{};return{c,n:t.name||t['name:en']||t.operator||t.brand||S1.nm,ph:t.phone||t['contact:phone'],oh:t.opening_hours,d:hav(cn.c,c)}})
+    .filter(x=>isFinite(x.c[0])).sort((a,b)=>a.d-b.d).filter(x=>{const k=x.n+x.c.map(v=>v.toFixed(4));return seen[k]?0:seen[k]=1}).slice(0,8);
+  $('sl').innerHTML=L2.length?(old?'Dati salvati (senza connessione). ':'')+'I più vicini a '+cn.n+':':'Nessun risultato nelle vicinanze. '+gl;
+  const box=document.createElement('div');
+  L2.forEach(x=>{const ph=x.ph?x.ph.split(';')[0].trim():'',q=x.c.join(','),r=document.createElement('div');r.className='it';
+    r.innerHTML='<div style="flex:1"><b>'+x.n+'</b><br><small>'+fd(x.d)+(x.oh==='24/7'?' · aperto 24 ore':'')+'</small>'+(ph?'<br><small><a href="tel:'+ph.replace(/[^+\d]/g,'')+'">'+ph+'</a></small>':'')+'</div><a href="'+gm(q)+'" target="_blank" rel="noopener">Mappa</a><a href="'+dirTo(q)+'" target="_blank" rel="noopener">Vai</a>';
+    r.onclick=ev=>{if(ev.target.tagName!='A')map.flyTo(x.c,16,{duration:.7})};box.appendChild(r);
+    pin(S1.ic,x.c,{n:x.n,k:S1.ic,x:fd(x.d)+' da '+cn.n+(ph?' · '+ph:''),q:q,dst:q})});
+  $('sl').after(box);
+  const m=document.createElement('button');m.className='pill';m.style.marginTop='10px';m.textContent='📍 Cerca vicino a me';
+  m.onclick=()=>navigator.geolocation?navigator.geolocation.getCurrentPosition(p=>sosList(type,day,{c:[p.coords.latitude,p.coords.longitude],n:'la tua posizione'}),()=>{m.textContent='Posizione non autorizzata'},{timeout:10000}):0;
+  box.after(m);
+  rmode=true;if(L2.length)map.flyToBounds([cn.c,...L2.map(x=>x.c)],{padding:[40,40],maxZoom:15,duration:.9});
 }
 function show(i){
   const day=D[i],a=items(day);
@@ -274,8 +326,8 @@ function show(i){
   a.forEach(it=>{if(it.rt){it.pl&&layer.removeLayer(it.pl);it.pl=L.polyline([it.p.c,...it.rt.map(r=>[r[0],r[1]]),it.c],{color:'#c2410c',weight:4}).addTo(layer);it.rt.forEach(r=>{if(r[2])L.circleMarker([r[0],r[1]],{radius:5,color:'#c2410c',fillColor:'#fff',fillOpacity:1,weight:2}).bindTooltip(r[2]).addTo(layer)})}});
   const pts=a.flatMap(x=>[x.c,...(x.rt||[]).map(r=>[r[0],r[1]])]);
   view=pts;if(first){map.fitBounds(pts,{padding:[40,40],maxZoom:13,animate:false});first=false}else map.flyToBounds(pts,{padding:[40,40],maxZoom:13,duration:1.1});
-  $('info').innerHTML='<h2>'+lab(day.d)+' · '+day.t+'</h2><div id="nx" class="nx" style="display:none"></div><small style="color:#6b7770">✓ = durata calcolata sul percorso stradale (la seconda cifra include il traffico). Le altre sono stime: tocca una tappa → Indicazioni per i tempi aggiornati.</small><div class="chips">'+(CITY[day.cy]?'<button id="bw">☀️ Meteo</button>':'')+(R[CITY[day.cy]]?'<button id="br">🍜 Ristoranti</button>':'')+'<button id="bf">💱 Valuta</button></div>';
-  if($('bw'))$('bw').onclick=()=>weatherSheet(day);if($('br'))$('br').onclick=()=>restSheet(day);$('bf').onclick=fxSheet;nxItems=a;updNx();
+  $('info').innerHTML='<h2>'+lab(day.d)+' · '+day.t+'</h2><div id="nx" class="nx" style="display:none"></div><small style="color:#6b7770">✓ = durata calcolata sul percorso stradale (la seconda cifra include il traffico). Le altre sono stime: tocca una tappa → Indicazioni per i tempi aggiornati.</small><div class="chips">'+(CITY[day.cy]?'<button id="bw">☀️ Meteo</button>':'')+(R[CITY[day.cy]]?'<button id="br">🍜 Ristoranti</button>':'')+'<button id="bf">💱 Valuta</button>'+(CITY[day.cy]?'<button id="bs">🆘 SOS</button>':'')+'</div>';
+  if($('bw'))$('bw').onclick=()=>weatherSheet(day);if($('br'))$('br').onclick=()=>restSheet(day);$('bf').onclick=fxSheet;if($('bs'))$('bs').onclick=()=>sosSheet(day);nxItems=a;updNx();
   const ls=$('list');ls.innerHTML='';
   a.forEach((it,ix)=>{
     if(it.p&&it.m){const g=document.createElement('div');g.className='leg';g.textContent='↓ '+it.m;it.g=g;ls.appendChild(g)}
@@ -290,7 +342,7 @@ function show(i){
 }
 function card(it){
   const lk=(u,t)=>'<a href="'+u+'" target="_blank" rel="noopener">'+t+'</a>';
-  $('sheet').innerHTML='<button class="x" onclick="closeSheet()">✕</button><h3 style="margin:0">'+it.k+' '+it.n+'</h3>'+(it.t?'<p><b>Orario:</b> '+it.t+'</p>':'')+(it.p&&it.m?'<p><b>Spostamento da '+it.p.n+':</b> '+(it.rm?it.rm+' (calcolato sul percorso stradale)':it.m)+'</p>':'')+(it.x?'<p>'+it.x+'</p>':'')+(it.tk?'<div class="tk">'+it.tk.join('<br>')+'</div>':'')+lk(gm(it.q),'Apri su Google Maps')+(it.p&&it.m&&!/volo|treno/i.test(it.m)?lk(dir(it.p.q,it.q,it.m),'Indicazioni'):'')+(it.b?lk(it.b,'Apri su Booking'):'')+(it.lk?lk(it.lk[1],'🎟️ '+it.lk[0]):'');
+  $('sheet').innerHTML='<button class="x" onclick="closeSheet()">✕</button><h3 style="margin:0">'+it.k+' '+it.n+'</h3>'+(it.t?'<p><b>Orario:</b> '+it.t+'</p>':'')+(it.p&&it.m?'<p><b>Spostamento da '+it.p.n+':</b> '+(it.rm?it.rm+' (calcolato sul percorso stradale)':it.m)+'</p>':'')+(it.x?'<p>'+it.x+'</p>':'')+(it.tk?'<div class="tk">'+it.tk.join('<br>')+'</div>':'')+lk(gm(it.q),'Apri su Google Maps')+(it.p&&it.m&&!/volo|treno/i.test(it.m)?lk(dir(it.p.q,it.q,it.m),'Indicazioni'):'')+(it.b?lk(it.b,'Apri su Booking'):'')+(it.lk?lk(it.lk[1],'🎟️ '+it.lk[0]):'')+(it.dst?lk(dirTo(it.dst),'🧭 Indicazioni da dove sei'):'');
   $('sheet').classList.add('open');
 }
 D.forEach((d,i)=>{const b=document.createElement('button');b.textContent=lab(d.d);b.onclick=()=>show(i);$('days').appendChild(b)});
