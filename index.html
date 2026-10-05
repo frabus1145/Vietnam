@@ -49,7 +49,6 @@ details{margin-top:14px}summary{font-weight:600;padding:6px 2px}
 #map.zm .leaflet-overlay-pane{opacity:0;transition:none}
 .nx{background:#1f7a5c;color:#fff;border-radius:12px;padding:10px 12px;margin:8px 0;cursor:pointer;line-height:1.4}
 .chips{flex-wrap:wrap}
-#sheet a[href^="tel:"]{color:#1f7a5c;font-weight:600}
 </style>
 </head>
 <body>
@@ -265,14 +264,6 @@ function updNx(){
   else txt='✅ Le tappe con orario di oggi sono concluse';
   el.style.display='block';el.innerHTML=txt;el.onclick=it?()=>{card(it);map.flyTo(it.c,14,{duration:.8})}:null;
 }
-function usefulSheet(){
-  const t=(n,l)=>'<a href="tel:'+n+'">'+l+'</a>';
-  sheet('<h3 style="margin:0">🆘 Utile</h3><b>Emergenze in Vietnam</b><div class="tk">Polizia '+t('113','113')+' · Vigili del fuoco '+t('114','114')+' · Ambulanza '+t('115','115')+'</div>'
-  +'<b>Italiani in Vietnam</b><div class="tk"><b>Consolato Generale a Ho Chi Minh</b><br>93 Nguyễn Du, 10° piano, Distretto 1<br>Tel '+t('+842838275445','+84 28 3827 5445')+'<br>Emergenze per italiani: '+t('+84778010257','+84 778010257')+'<br><br><b>Ambasciata a Hanoi</b><br>9 Lê Phụng Hiểu, Hoàn Kiếm<br>Tel '+t('+842438256256','+84 24 3825 6256')+'<br>Emergenze fuori orario: '+t('+84903430950','+84 90 3430950')+'<br><br><small>Numeri presi dai siti ufficiali del Ministero degli Esteri: controllali prima di partire. Puoi anche registrare il viaggio su dovesiamonelmondo.it.</small></div>'
-  +'<b>Frasi utili</b> <small style="color:#6b7770">(pronuncia approssimativa)</small><div class="tk">Xin chào · <i>sin ciao</i> · ciao<br>Cảm ơn · <i>cam on</i> · grazie<br>Xin lỗi · <i>sin loi</i> · scusi<br>Bao nhiêu tiền? · <i>bao nhiu tien</i> · quanto costa?<br>Đắt quá · <i>dat quà</i> · troppo caro<br>Không cay · <i>kom kai</i> · non piccante<br>Tính tiền · <i>ting tien</i> · il conto<br>Giúp tôi với! · <i>diup toi voi</i> · aiuto!</div>'
-  +'<b>Con Grab</b><ul><li>Controlla nell\'app il prezzo prima di confermare</li><li>Prima di salire verifica targa e nome dell\'autista</li><li>Usa il pin preciso per il ritiro; in aeroporto segui le indicazioni per i punti Grab</li><li>Nelle ore di punta i prezzi salgono</li></ul>'
-  +'<b>Attraversare la strada</b><p style="margin:4px 0">Nel traffico di scooter cammina a passo lento, costante e prevedibile: i motociclisti ti calcolano e ti evitano.</p>');
-}
 function show(i){
   const day=D[i],a=items(day);
   [...$('days').children].forEach((b,j)=>{b.classList.toggle('on',j==i);if(j==i)b.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'})});
@@ -283,8 +274,8 @@ function show(i){
   a.forEach(it=>{if(it.rt){it.pl&&layer.removeLayer(it.pl);it.pl=L.polyline([it.p.c,...it.rt.map(r=>[r[0],r[1]]),it.c],{color:'#c2410c',weight:4}).addTo(layer);it.rt.forEach(r=>{if(r[2])L.circleMarker([r[0],r[1]],{radius:5,color:'#c2410c',fillColor:'#fff',fillOpacity:1,weight:2}).bindTooltip(r[2]).addTo(layer)})}});
   const pts=a.flatMap(x=>[x.c,...(x.rt||[]).map(r=>[r[0],r[1]])]);
   view=pts;if(first){map.fitBounds(pts,{padding:[40,40],maxZoom:13,animate:false});first=false}else map.flyToBounds(pts,{padding:[40,40],maxZoom:13,duration:1.1});
-  $('info').innerHTML='<h2>'+lab(day.d)+' · '+day.t+'</h2><div id="nx" class="nx" style="display:none"></div><small style="color:#6b7770">✓ = durata calcolata sul percorso stradale (la seconda cifra include il traffico). Le altre sono stime: tocca una tappa → Indicazioni per i tempi aggiornati.</small><div class="chips">'+(CITY[day.cy]?'<button id="bw">☀️ Meteo</button>':'')+(R[CITY[day.cy]]?'<button id="br">🍜 Ristoranti</button>':'')+'<button id="bf">💱 Valuta</button><button id="bu">🆘 Utile</button></div>';
-  if($('bw'))$('bw').onclick=()=>weatherSheet(day);if($('br'))$('br').onclick=()=>restSheet(day);$('bf').onclick=fxSheet;$('bu').onclick=usefulSheet;nxItems=a;updNx();
+  $('info').innerHTML='<h2>'+lab(day.d)+' · '+day.t+'</h2><div id="nx" class="nx" style="display:none"></div><small style="color:#6b7770">✓ = durata calcolata sul percorso stradale (la seconda cifra include il traffico). Le altre sono stime: tocca una tappa → Indicazioni per i tempi aggiornati.</small><div class="chips">'+(CITY[day.cy]?'<button id="bw">☀️ Meteo</button>':'')+(R[CITY[day.cy]]?'<button id="br">🍜 Ristoranti</button>':'')+'<button id="bf">💱 Valuta</button></div>';
+  if($('bw'))$('bw').onclick=()=>weatherSheet(day);if($('br'))$('br').onclick=()=>restSheet(day);$('bf').onclick=fxSheet;nxItems=a;updNx();
   const ls=$('list');ls.innerHTML='';
   a.forEach((it,ix)=>{
     if(it.p&&it.m){const g=document.createElement('div');g.className='leg';g.textContent='↓ '+it.m;it.g=g;ls.appendChild(g)}
