@@ -270,13 +270,27 @@ function updNx(){
 }
 const E={hcm:{n:"Consolato Generale d'Italia a Ho Chi Minh",a:"President Place, 93 Nguyễn Du, 10° piano, Distretto 1, Ho Chi Minh",tel:["+842838275445","+84 28 3827 5445"],em:["+84778010257","+84 778010257"],c:[10.778,106.6955]},
 hn:{n:"Ambasciata d'Italia a Hanoi",a:"9 Lê Phụng Hiểu, Hoàn Kiếm, Hanoi",tel:["+842438256256","+84 24 3825 6256"],em:["+84903430950","+84 90 3430950"],c:[21.0245,105.8555]}};
-const SOS={h:{ic:'🏥',t:'Ospedali e medici',nm:'Struttura sanitaria',q:(a,o)=>'nwr["amenity"~"^(hospital|clinic)$"](around:5000,'+a+','+o+');',gq:'hospital'},
-a:{ic:'🏧',t:'ATM',nm:'ATM',q:(a,o)=>'nwr["amenity"="atm"](around:1000,'+a+','+o+');',gq:'ATM'}};
+const SOS={h:{ic:'🏥',t:'Ospedali e medici',q:(a,o)=>'nwr["amenity"~"^(hospital|clinic)$"]["name"](around:6000,'+a+','+o+');'},
+a:{ic:'🏧',t:'ATM',q:(a,o)=>'nwr["amenity"="atm"](around:1000,'+a+','+o+');'}};
+const CITYN={hcm:'Ho Chi Minh',hoian:'Hoi An',nb:'Ninh Binh',hn:'Hanoi',hl:'Ha Long'};
+const HC={
+hcm:[["FV Hospital (Franco-Vietnamese)","6 Nguyễn Lương Bằng, Quận 7","il più indicato per casi seri"],["Vinmec Central Park International Hospital","208 Nguyễn Hữu Cảnh, Bình Thạnh","privato internazionale"],["Family Medical Practice","34 Lê Duẩn, Quận 1","clinica per visite, in centro"],["Cho Ray Hospital","201B Nguyễn Chí Thanh, Quận 5","pubblico: solo emergenze"]],
+hoian:[["Thai Binh Duong - Pacific Hospital","6 Phan Đình Phùng, Cẩm Phô, Hội An","ospedale generale in città"],["Hoan My Da Nang Hospital","161 Nguyễn Văn Linh, Thanh Khê, Da Nang","privato, a Da Nang"],["Vinmec Da Nang International Hospital","Da Nang","privato internazionale, a Da Nang"]],
+nb:[["Bệnh viện Đa khoa tỉnh Ninh Bình","80 Tuệ Tĩnh, Nam Thành, Ninh Bình","l'ospedale provinciale, il principale della zona"]],
+hn:[["Hanoi French Hospital","1 Phương Mai, Đống Đa","privato internazionale"],["Vinmec Times City International Hospital","458 Minh Khai, Hai Bà Trưng","privato, personale che parla inglese"],["Bach Mai Hospital","78 Giải Phóng, Đống Đa","pubblico: solo emergenze"]],
+hl:[["Bai Chay Hospital (Bệnh viện Bãi Cháy)","Hạ Long","ospedale a Ha Long"],["Quang Ninh Provincial General Hospital","Hạ Long","ospedale provinciale"]]};
 const hav=(a,b)=>{const r=x=>x*Math.PI/180,s=Math.sin(r(b[0]-a[0])/2)**2+Math.cos(r(a[0]))*Math.cos(r(b[0]))*Math.sin(r(b[1]-a[1])/2)**2;return 12742000*Math.asin(Math.sqrt(s))};
 const fd=m=>m<1000?Math.round(m/10)*10+' m':(m/1000).toFixed(1).replace('.',',')+' km';
 const dirTo=d=>'https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(d)+'&travelmode=driving';
+const gpl=(n,c)=>'https://www.google.com/maps/search/'+encodeURIComponent(n)+'/@'+c[0]+','+c[1]+',17z';
 async function osm(q){for(const u of['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter']){try{const r=await fetch(u,{method:'POST',body:q});if(r.ok)return(await r.json()).elements}catch(e){}}throw 0}
-function centerOf(day){const a=items(day),x=a.find(y=>y.k==='🏨')||a[0];return{c:x.c,n:x.n}}
+async function geo(q,near,km){const k='vn-geo:'+q;try{const c=JSON.parse(localStorage.getItem(k));if(c)return c}catch(e){}
+  await new Promise(r=>setTimeout(r,1000));
+  try{const j=await(await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q='+encodeURIComponent(q))).json();
+    if(j[0]){const c=[+j[0].lat,+j[0].lon];if(!near||hav(near,c)<km*1000){try{localStorage.setItem(k,JSON.stringify(c))}catch(e){}return c}}}catch(e){}
+  return null}
+function centerOf(day){if(day.cy==='Ha Long')return{c:MAR.c,n:MAR.n};const s=day.s.find(y=>y.h),k=s&&H[s.h];if(k)return{c:k.c,n:k.n,a:k.a};const x=items(day)[0];return{c:x.c,n:x.n}}
+async function cen(day){const x=centerOf(day);if(!x.a)return x;const g=await geo(x.a,x.c,6);return g?{c:g,n:x.n,ok:1}:x}
 const pin=(ic,c,o)=>L.marker(c,{icon:L.divIcon({className:'',html:'<div class="rst">'+ic+'</div>',iconSize:[28,28]})}).on('click',()=>card(o)).addTo(rl);
 function sosSheet(day){
   const k=CITY[day.cy],cn=centerOf(day);
@@ -292,29 +306,43 @@ function embSheet(day){
   rmode=true;ks.forEach(x=>{const e=E[x];pin('🏛️',e.c,{n:e.n,k:'🏛️',x:e.a,q:e.a,dst:e.a})});
   map.flyToBounds(ks.map(x=>E[x].c),{padding:[40,40],maxZoom:14,duration:.9});
 }
+const mkRow=x=>{const r=document.createElement('div');r.className='it';
+  r.innerHTML='<div style="flex:1"><b>'+x.n+'</b><br><small>'+x.sub+'</small>'+(x.ph?'<br><small><a href="tel:'+x.ph.replace(/[^+\d]/g,'')+'">'+x.ph+'</a></small>':'')+'</div><a href="'+x.gl+'" target="_blank" rel="noopener">Mappa</a><a href="'+dirTo(x.dst)+'" target="_blank" rel="noopener">Vai</a>';
+  r.onclick=ev=>{if(ev.target.tagName!='A'&&x.c)map.flyTo(x.c,16,{duration:.7})};return r};
+const mkPin=(ic,x)=>pin(ic,x.c,{n:x.n,k:ic,x:x.sub+(x.ph?' · '+x.ph:''),gl:x.gl,q:x.n,dst:x.dst});
 async function sosList(type,day,from){
-  const S1=SOS[type],cn=from||centerOf(day);
-  sheet('<button class="pill" id="sb">← SOS</button><h3 style="margin:8px 0 0">'+S1.ic+' '+S1.t+'</h3><p id="sl">Cerco vicino a '+cn.n+'…</p>');
+  const S1=SOS[type],kk=CITY[day.cy];
+  sheet('<button class="pill" id="sb">← SOS</button><h3 style="margin:8px 0 0">'+S1.ic+' '+S1.t+'</h3><p id="sl">Cerco la posizione…</p>');
   $('sb').onclick=()=>sosSheet(day);
-  const ck='vn-sos:'+type+':'+cn.c[0].toFixed(2)+','+cn.c[1].toFixed(2);let els,old=false;
+  const cn=from||await cen(day);if(!$('sl'))return;
+  $('sl').innerHTML='Vicino a <b>'+cn.n+'</b>'+(cn.ok||from?'':' <small>(posizione approssimativa dell\'hotel: usa "Cerca vicino a me" per più precisione)</small>');
+  const box=document.createElement('div');$('sl').after(box);rmode=true;
+  const cur=type=='h'?HC[kk]||[]:[];
+  if(cur.length){const t=document.createElement('p');t.innerHTML='<b>Consigliati</b> <small style="color:#6b7770">(nomi e indirizzi da fonti pubbliche: verificali prima di partire)</small>';box.append(t);
+    const xs=cur.map(e=>({n:e[0],sub:e[1]+' · '+e[2],gl:gm(e[0]+', '+e[1]),dst:e[0]+', '+e[1]}));xs.forEach(x=>box.append(mkRow(x)));
+    (async()=>{for(const x of xs){const c=await geo(x.dst,CC[kk],40);if(!$('sl'))return;if(c){x.c=c;mkPin(S1.ic,x)}}})()}
+  const ck='vn-sos2:'+type+':'+cn.c[0].toFixed(2)+','+cn.c[1].toFixed(2);let els,old=false;
   try{els=await osm('[out:json][timeout:20];('+S1.q(cn.c[0],cn.c[1])+');out center 60;');try{localStorage.setItem(ck,JSON.stringify(els))}catch(e){}}
   catch(e){try{els=JSON.parse(localStorage.getItem(ck));old=!!els}catch(e2){}}
   if(!$('sl'))return;
-  const gl='<a href="'+gm(S1.gq+' near '+cn.c.join(','))+'" target="_blank" rel="noopener">Cerca su Google Maps</a>';
-  if(!els){$('sl').innerHTML='Non riesco a caricare i dati (serve internet). '+gl;return}
-  const seen={},L2=els.map(e=>{const c=e.center?[e.center.lat,e.center.lon]:[e.lat,e.lon],t=e.tags||{};return{c,n:t.name||t['name:en']||t.operator||t.brand||S1.nm,ph:t.phone||t['contact:phone'],oh:t.opening_hours,d:hav(cn.c,c)}})
-    .filter(x=>isFinite(x.c[0])).sort((a,b)=>a.d-b.d).filter(x=>{const k=x.n+x.c.map(v=>v.toFixed(4));return seen[k]?0:seen[k]=1}).slice(0,8);
-  $('sl').innerHTML=L2.length?(old?'Dati salvati (senza connessione). ':'')+'I più vicini a '+cn.n+':':'Nessun risultato nelle vicinanze. '+gl;
-  const box=document.createElement('div');
-  L2.forEach(x=>{const ph=x.ph?x.ph.split(';')[0].trim():'',q=x.c.join(','),r=document.createElement('div');r.className='it';
-    r.innerHTML='<div style="flex:1"><b>'+x.n+'</b><br><small>'+fd(x.d)+(x.oh==='24/7'?' · aperto 24 ore':'')+'</small>'+(ph?'<br><small><a href="tel:'+ph.replace(/[^+\d]/g,'')+'">'+ph+'</a></small>':'')+'</div><a href="'+gm(q)+'" target="_blank" rel="noopener">Mappa</a><a href="'+dirTo(q)+'" target="_blank" rel="noopener">Vai</a>';
-    r.onclick=ev=>{if(ev.target.tagName!='A')map.flyTo(x.c,16,{duration:.7})};box.appendChild(r);
-    pin(S1.ic,x.c,{n:x.n,k:S1.ic,x:fd(x.d)+' da '+cn.n+(ph?' · '+ph:''),q:q,dst:q})});
-  $('sl').after(box);
+  const glk='<a href="'+gm(S1.t+' near '+cn.c.join(','))+'" target="_blank" rel="noopener">Cerca su Google Maps</a>';
+  const t2=document.createElement('p');box.append(t2);
+  if(!els)t2.innerHTML='Elenco dei più vicini non disponibile (serve internet). '+glk;
+  else{
+    const seen={},BAD=/nha khoa|dental|thẩm mỹ|spa\b|beauty|thú y|veterin/i;
+    const L2=els.map(e=>{const c=e.center?[e.center.lat,e.center.lon]:[e.lat,e.lon],t=e.tags||{};return{c,t,n:t.name||t['name:en']||t.operator||t.brand||(type=='a'?'ATM':''),d:hav(cn.c,c)}})
+      .filter(x=>isFinite(x.c[0])&&x.n&&!BAD.test(x.n)&&!/dent|cosm/.test(x.t['healthcare:speciality']||''))
+      .map(x=>({...x,r:x.d+(x.t.amenity=='clinic'?2000:0)-(x.t.emergency=='yes'?1000:0)})).sort((a,b)=>a.r-b.r)
+      .filter(x=>{const k=x.n+x.c.map(v=>v.toFixed(4));return seen[k]?0:seen[k]=1}).slice(0,6);
+    t2.innerHTML=L2.length?(old?'Dati salvati (senza connessione). ':'')+'<b>Più vicini</b> <small style="color:#6b7770">(da OpenStreetMap, controlla sempre su Google Maps)</small>':'Nessun risultato nelle vicinanze. '+glk;
+    L2.forEach(x=>{const t=x.t,ad=t['addr:full']||[t['addr:housenumber'],t['addr:street']].filter(Boolean).join(' '),q=x.c.join(',');
+      const o=type=='h'?{n:x.n,sub:(t.amenity=='hospital'?'Ospedale':'Clinica')+(t.emergency=='yes'?' · pronto soccorso':'')+' · '+fd(x.d)+(t.opening_hours==='24/7'?' · aperto 24 ore':'')+(ad?' · '+ad:''),gl:gpl(x.n,x.c),dst:x.n+', '+(ad?ad+', ':'')+CITYN[kk]}
+        :{n:x.n,sub:'ATM · '+fd(x.d),gl:gpl(x.n=='ATM'?'ATM':x.n+' ATM',x.c),dst:q};
+      o.c=x.c;o.ph=(t.phone||t['contact:phone']||'').split(';')[0].trim();box.append(mkRow(o));mkPin(S1.ic,o)});
+    if(L2.length)map.flyToBounds([cn.c,...L2.map(x=>x.c)],{padding:[40,40],maxZoom:15,duration:.9})}
   const m=document.createElement('button');m.className='pill';m.style.marginTop='10px';m.textContent='📍 Cerca vicino a me';
   m.onclick=()=>navigator.geolocation?navigator.geolocation.getCurrentPosition(p=>sosList(type,day,{c:[p.coords.latitude,p.coords.longitude],n:'la tua posizione'}),()=>{m.textContent='Posizione non autorizzata'},{timeout:10000}):0;
-  box.after(m);
-  rmode=true;if(L2.length)map.flyToBounds([cn.c,...L2.map(x=>x.c)],{padding:[40,40],maxZoom:15,duration:.9});
+  box.append(m);
 }
 function show(i){
   const day=D[i],a=items(day);
@@ -342,7 +370,7 @@ function show(i){
 }
 function card(it){
   const lk=(u,t)=>'<a href="'+u+'" target="_blank" rel="noopener">'+t+'</a>';
-  $('sheet').innerHTML='<button class="x" onclick="closeSheet()">✕</button><h3 style="margin:0">'+it.k+' '+it.n+'</h3>'+(it.t?'<p><b>Orario:</b> '+it.t+'</p>':'')+(it.p&&it.m?'<p><b>Spostamento da '+it.p.n+':</b> '+(it.rm?it.rm+' (calcolato sul percorso stradale)':it.m)+'</p>':'')+(it.x?'<p>'+it.x+'</p>':'')+(it.tk?'<div class="tk">'+it.tk.join('<br>')+'</div>':'')+lk(gm(it.q),'Apri su Google Maps')+(it.p&&it.m&&!/volo|treno/i.test(it.m)?lk(dir(it.p.q,it.q,it.m),'Indicazioni'):'')+(it.b?lk(it.b,'Apri su Booking'):'')+(it.lk?lk(it.lk[1],'🎟️ '+it.lk[0]):'')+(it.dst?lk(dirTo(it.dst),'🧭 Indicazioni da dove sei'):'');
+  $('sheet').innerHTML='<button class="x" onclick="closeSheet()">✕</button><h3 style="margin:0">'+it.k+' '+it.n+'</h3>'+(it.t?'<p><b>Orario:</b> '+it.t+'</p>':'')+(it.p&&it.m?'<p><b>Spostamento da '+it.p.n+':</b> '+(it.rm?it.rm+' (calcolato sul percorso stradale)':it.m)+'</p>':'')+(it.x?'<p>'+it.x+'</p>':'')+(it.tk?'<div class="tk">'+it.tk.join('<br>')+'</div>':'')+lk(it.gl||gm(it.q),'Apri su Google Maps')+(it.p&&it.m&&!/volo|treno/i.test(it.m)?lk(dir(it.p.q,it.q,it.m),'Indicazioni'):'')+(it.b?lk(it.b,'Apri su Booking'):'')+(it.lk?lk(it.lk[1],'🎟️ '+it.lk[0]):'')+(it.dst?lk(dirTo(it.dst),'🧭 Indicazioni da dove sei'):'');
   $('sheet').classList.add('open');
 }
 D.forEach((d,i)=>{const b=document.createElement('button');b.textContent=lab(d.d);b.onclick=()=>show(i);$('days').appendChild(b)});
@@ -355,7 +383,6 @@ s.addEventListener('touchstart',e=>{y=e.touches[0].clientY;s.style.transition='n
 s.addEventListener('touchmove',e=>{const d=e.touches[0].clientY-y;if(d>0&&s.scrollTop<=0)s.style.transform='translateY('+d+'px)'},{passive:true});
 s.addEventListener('touchend',e=>{s.style.transition='';s.style.transform='';if(e.changedTouches[0].clientY-y>80&&s.scrollTop<=0)closeSheet()});})();
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js');
-  
 </script>
 </body>
 </html>
